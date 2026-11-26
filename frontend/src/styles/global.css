@@ -14,6 +14,7 @@ body {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 .tabular-nums {
@@ -47,7 +48,7 @@ a:hover {
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 2000;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-hairline);
 }
@@ -201,6 +202,8 @@ a:hover {
 
 .map-wrapper {
   position: relative;
+  isolation: isolate;
+  z-index: 1;
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -496,6 +499,26 @@ a:hover {
 }
 
 @media (max-width: 1024px) {
+  .nav-links,
+  .nav-auth {
+    display: none;
+  }
+  .mobile-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mobile-nav {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 2001;
+    background: var(--bg-surface);
+    padding: var(--space-3) var(--space-4) var(--space-4);
+    border-top: 1px solid var(--border-hairline);
+    box-shadow: 0 8px 20px rgba(16, 32, 29, 0.08);
+    gap: 6px;
+  }
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -514,19 +537,21 @@ a:hover {
     padding-left: var(--space-4);
     padding-right: var(--space-4);
   }
-  .nav-links,
-  .nav-auth {
-    display: none;
+  .page-header h1 {
+    font-size: 1.25rem;
   }
-  .mobile-menu-btn {
-    display: inline-flex;
+  .map-wrapper {
+    height: 380px !important;
   }
-  .mobile-nav {
-    display: flex;
-    flex-direction: column;
-    padding: var(--space-2) var(--space-4) var(--space-4);
-    border-top: 1px solid var(--border-hairline);
-    gap: 4px;
+  .map-legend {
+    bottom: 8px;
+    left: 8px;
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+  .drawer-footer {
+    flex-wrap: wrap;
+    gap: 10px;
   }
   .kpi-grid {
     grid-template-columns: 1fr;

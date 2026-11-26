@@ -19,23 +19,46 @@ export default function App() {
       <Navbar />
       <main>
         <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/map" element={<MapPage />} />
-          <Route path="/districts/:id" element={<DistrictDetailPage />} />
-          <Route path="/reports" element={<CommunityReportsPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/map"
+            element={
+              <ProtectedRoute>
+                <MapPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/districts/:id"
+            element={
+              <ProtectedRoute>
+                <DistrictDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <CommunityReportsPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/submit-report"
             element={
               <ProtectedRoute>
                 <SubmitReportPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/moderation"
-            element={
-              <ProtectedRoute allowedRoles={["moderator", "admin"]}>
-                <ModerationPage />
               </ProtectedRoute>
             }
           />
@@ -47,10 +70,30 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/methodology" element={<MethodologyPage />} />
-          <Route path="/about" element={<AboutPage />} />
+          <Route
+            path="/methodology"
+            element={
+              <ProtectedRoute>
+                <MethodologyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <ProtectedRoute>
+                <AboutPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/moderation"
+            element={
+              <ProtectedRoute allowedRoles={["moderator", "admin"]}>
+                <ModerationPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </main>
     </div>
