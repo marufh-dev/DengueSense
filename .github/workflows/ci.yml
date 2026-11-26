@@ -1,0 +1,40 @@
+name: CI Build & Security Checks
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install & build frontend
+        working-directory: frontend
+        run: npm ci && npm run build
+      - name: Check for accidental secrets or source maps
+        run: |
+          if find frontend/dist -name "*.map" | grep -q .; then
+            echo "Error: Source maps found in production dist!"
+            exit 1
+          fi
+
+  backend-unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install backend dependencies
+        run: pip install -r backend/requirements.txt
+      - name: Run unit tests (risk engine)
+        run: pytest backend/tests/test_risk_engine_and_api.py -k "test_weights_sum_to_one or test_missing_data_returns_no_data or test_optimal_conditions_high_or_critical or test_community_signal_excludes_suspected_dengue" -v
