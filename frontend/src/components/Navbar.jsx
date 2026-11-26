@@ -26,26 +26,27 @@ export default function Navbar() {
   return (
     <header className="topbar">
       <div className="topbar-inner">
-        <NavLink to="/" className="brand" onClick={() => setOpen(false)}>
+        <NavLink to={user ? "/" : "/login"} className="brand" onClick={() => setOpen(false)}>
           <Activity size={18} color="var(--accent-primary)" />
           <span>{t.brand}</span>
-          <span className="brand-tag">BD-64</span>
         </NavLink>
 
-        <nav className="nav-links" aria-label="Primary navigation">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        {user && (
+          <nav className="nav-links" aria-label="Primary navigation">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === "/"}
+                className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+        )}
 
-        <div className="nav-auth" style={{ gap: 8 }}>
+        <div className={user ? "nav-auth" : "nav-auth-public"} style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             type="button"
             className="btn btn-secondary"
@@ -57,33 +58,30 @@ export default function Navbar() {
             <span>{lang === "en" ? "বাংলা" : "EN"}</span>
           </button>
 
-          {user ? (
+          {user && (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span className="meta-label mono">{role}</span>
               <button type="button" className="btn btn-secondary" onClick={signOut}>
                 <LogOut size={14} /> {t.nav.signOut}
               </button>
             </div>
-          ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <NavLink to="/login" className="btn btn-secondary">{t.nav.signIn}</NavLink>
-              <NavLink to="/register" className="btn btn-primary">{t.nav.register}</NavLink>
-            </div>
           )}
         </div>
 
-        <button
-          type="button"
-          className="btn btn-ghost mobile-menu-btn"
-          aria-label={open ? "Close navigation menu" : "Open navigation menu"}
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? <X size={18} /> : <Menu size={18} />}
-        </button>
+        {user && (
+          <button
+            type="button"
+            className="btn btn-ghost mobile-menu-btn"
+            aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        )}
       </div>
 
-      {open && (
+      {user && open && (
         <nav className="mobile-nav" aria-label="Mobile navigation">
           {navItems.map((item) => (
             <NavLink
@@ -99,19 +97,13 @@ export default function Navbar() {
           <button type="button" className="btn btn-secondary" onClick={toggleLang}>
             <Languages size={14} /> {lang === "en" ? "বাংলায় দেখুন" : "Switch to English"}
           </button>
-          {user ? (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => { signOut(); setOpen(false); }}
-            >
-              {t.nav.signOut} ({role})
-            </button>
-          ) : (
-            <NavLink to="/login" className="btn btn-primary" onClick={() => setOpen(false)}>
-              {t.nav.signIn}
-            </NavLink>
-          )}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => { signOut(); setOpen(false); }}
+          >
+            {t.nav.signOut} ({role})
+          </button>
         </nav>
       )}
     </header>
