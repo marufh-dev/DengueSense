@@ -16,7 +16,6 @@ export default function Navbar() {
     { to: "/submit-report", label: t.nav.submit },
     { to: "/my-alerts", label: t.nav.alerts },
     { to: "/methodology", label: t.nav.methodology },
-    { to: "/about", label: t.nav.about },
   ];
 
   if (user && (role === "moderator" || role === "admin")) {
@@ -46,7 +45,7 @@ export default function Navbar() {
           </nav>
         )}
 
-        <div className={user ? "nav-auth" : "nav-auth-public"} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div className={user ? "nav-auth" : "nav-auth-public"}>
           <button
             type="button"
             className="btn btn-secondary"

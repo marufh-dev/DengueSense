@@ -11,7 +11,6 @@ import MyAlertsPage from "./pages/MyAlertsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import MethodologyPage from "./pages/MethodologyPage";
-import AboutPage from "./pages/AboutPage";
 
 export default function App() {
   return (
@@ -75,14 +74,6 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <MethodologyPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/about"
-            element={
-              <ProtectedRoute>
-                <AboutPage />
               </ProtectedRoute>
             }
           />
