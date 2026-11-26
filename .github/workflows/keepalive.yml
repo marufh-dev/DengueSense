@@ -1,0 +1,14 @@
+name: Keep Render Backend Warm
+
+on:
+  schedule:
+    # Ping every 10 minutes to minimize Render Free tier cold-starts
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping DengueSense Render API health endpoint
+        run: curl -fsS --max-time 30 https://denguesense-api.onrender.com/api/health
