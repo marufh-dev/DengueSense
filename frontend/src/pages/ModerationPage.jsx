@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Check, X } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function ModerationPage() {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [reports, setReports] = useState([]);
   const [notes, setNotes] = useState({});
@@ -38,8 +40,8 @@ export default function ModerationPage() {
     <div className="container">
       <div className="page-header">
         <div>
-          <h1>Moderation Dashboard</h1>
-          <p className="subtitle">Review, approve, or reject citizen community reports.</p>
+          <h1>{t.moderation.title}</h1>
+          <p className="subtitle">{t.moderation.subtitle}</p>
         </div>
         <select
           aria-label="Filter moderation status"
@@ -57,14 +59,14 @@ export default function ModerationPage() {
 
       {reports.length === 0 ? (
         <div className="card">
-          <p className="muted-empty" style={{ margin: 0 }}>No {statusFilter.toLowerCase()} reports.</p>
+          <p className="muted-empty" style={{ margin: 0 }}>{t.moderation.empty}</p>
         </div>
       ) : (
         <div className="two-col-grid">
           {reports.map((r) => (
             <div key={r.id} className="card">
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <strong>{r.report_type.replaceAll("_", " ")}</strong>
+                <strong>{t.submit.types[r.report_type] || r.report_type}</strong>
                 <span className="badge badge-nodata">{r.status}</span>
               </div>
               <div className="meta-label" style={{ marginTop: 4 }}>
@@ -74,7 +76,7 @@ export default function ModerationPage() {
               <input
                 type="text"
                 className="input-field"
-                placeholder="Moderator notes (optional)"
+                placeholder={t.moderation.notesPlaceholder}
                 value={notes[r.id] || ""}
                 onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })}
                 style={{ width: "100%", marginBottom: 10 }}
@@ -85,14 +87,14 @@ export default function ModerationPage() {
                   className="btn btn-primary"
                   onClick={() => handleAction(r.id, "APPROVE")}
                 >
-                  <Check size={14} /> Approve
+                  <Check size={14} /> {t.moderation.approve}
                 </button>
                 <button
                   type="button"
                   className="btn btn-danger"
                   onClick={() => handleAction(r.id, "REJECT")}
                 >
-                  <X size={14} /> Reject
+                  <X size={14} /> {t.moderation.reject}
                 </button>
               </div>
             </div>

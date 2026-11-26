@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Camera, PlusCircle, ThumbsUp } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 
 const REPORT_TYPES = [
   "ALL",
@@ -14,6 +15,7 @@ const REPORT_TYPES = [
 
 export default function CommunityReportsPage() {
   const { user, token } = useAuth();
+  const { t } = useLanguage();
   const [reports, setReports] = useState([]);
   const [filterType, setFilterType] = useState("ALL");
   const [showMine, setShowMine] = useState(false);
@@ -36,7 +38,7 @@ export default function CommunityReportsPage() {
   const handleVote = async (reportId) => {
     setError("");
     if (!token) {
-      setError("Please sign in to vote on community reports.");
+      setError(t.reports.signInToVote);
       return;
     }
     try {
@@ -64,14 +66,11 @@ export default function CommunityReportsPage() {
     <div className="container">
       <div className="page-header">
         <div>
-          <h1>Community Reports</h1>
-          <p className="subtitle">
-            Moderated citizen observations (generalized coordinates for privacy; suspected dengue
-            reports are not confirmed medical cases).
-          </p>
+          <h1>{t.reports.title}</h1>
+          <p className="subtitle">{t.reports.subtitle}</p>
         </div>
         <Link to="/submit-report" className="btn btn-primary">
-          <PlusCircle size={15} /> Submit Report
+          <PlusCircle size={15} /> {t.reports.submitBtn}
         </Link>
       </div>
 
@@ -82,8 +81,10 @@ export default function CommunityReportsPage() {
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
         >
-          {REPORT_TYPES.map((t) => (
-            <option key={t} value={t}>{t.replaceAll("_", " ")}</option>
+          {REPORT_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {type === "ALL" ? t.mapPage.allDivisions : t.submit.types[type] || type}
+            </option>
           ))}
         </select>
 
@@ -94,7 +95,7 @@ export default function CommunityReportsPage() {
               checked={showMine}
               onChange={(e) => setShowMine(e.target.checked)}
             />
-            Show my submissions (including pending)
+            {t.reports.showMine}
           </label>
         )}
       </div>
@@ -103,16 +104,14 @@ export default function CommunityReportsPage() {
 
       {reports.length === 0 ? (
         <div className="card">
-          <p className="muted-empty" style={{ margin: 0 }}>
-            No reports match this filter yet.
-          </p>
+          <p className="muted-empty" style={{ margin: 0 }}>{t.reports.empty}</p>
         </div>
       ) : (
         <div className="two-col-grid">
           {reports.map((r) => (
             <div key={r.id} className="card">
               <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                <strong>{r.report_type.replaceAll("_", " ")}</strong>
+                <strong>{t.submit.types[r.report_type] || r.report_type}</strong>
                 <span className="badge badge-nodata">{r.status}</span>
               </div>
               <div className="meta-label" style={{ marginTop: 4 }}>
@@ -136,7 +135,7 @@ export default function CommunityReportsPage() {
                       className="btn btn-secondary"
                       onClick={() => handleViewPhoto(r.id)}
                     >
-                      <Camera size={14} /> Photo
+                      <Camera size={14} /> {t.reports.photoBtn}
                     </button>
                   )}
                 </div>
@@ -153,9 +152,9 @@ export default function CommunityReportsPage() {
         <div className="modal-backdrop" onClick={() => setPhotoModalUrl("")}>
           <div className="card modal-card" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-              <strong>Report Photo</strong>
+              <strong>{t.reports.photoBtn}</strong>
               <button type="button" className="btn btn-ghost" onClick={() => setPhotoModalUrl("")}>
-                Close
+                {t.reports.close}
               </button>
             </div>
             <img

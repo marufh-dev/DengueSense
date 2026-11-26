@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../api/client";
+import { useLanguage } from "../context/LanguageContext";
 import BangladeshMap from "../components/BangladeshMap";
 import DistrictDrawer from "../components/DistrictDrawer";
 
 export default function MapPage() {
+  const { t } = useLanguage();
   const [districts, setDistricts] = useState([]);
   const [reports, setReports] = useState([]);
   const [division, setDivision] = useState("ALL");
@@ -42,11 +44,11 @@ export default function MapPage() {
     <div className="container">
       <div className="page-header">
         <div>
-          <h1>64-District Environmental Suitability Map</h1>
-          <p className="subtitle">Filter by division or click any district polygon for details.</p>
+          <h1>{t.mapPage.title}</h1>
+          <p className="subtitle">{t.mapPage.subtitle}</p>
         </div>
         <div className="filter-row">
-          <label htmlFor="div-filter" className="meta-label">Division:</label>
+          <label htmlFor="div-filter" className="meta-label">{t.mapPage.divisionLabel}</label>
           <select
             id="div-filter"
             className="input-field"
@@ -55,7 +57,9 @@ export default function MapPage() {
             style={{ width: 180 }}
           >
             {divisions.map((div) => (
-              <option key={div} value={div}>{div}</option>
+              <option key={div} value={div}>
+                {div === "ALL" ? t.mapPage.allDivisions : div}
+              </option>
             ))}
           </select>
         </div>

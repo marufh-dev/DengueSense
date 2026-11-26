@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function LoginPage() {
   const { signIn } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
@@ -31,16 +33,14 @@ export default function LoginPage() {
   return (
     <div className="container" style={{ maxWidth: 460 }}>
       <div className="card">
-        <h1 style={{ marginTop: 0, fontSize: "1.35rem" }}>Sign in to DengueSense</h1>
-        <p className="subtitle" style={{ marginBottom: 16 }}>
-          Sign in to submit community reports, vote, and manage district alerts.
-        </p>
+        <h1 style={{ marginTop: 0, fontSize: "1.35rem" }}>{t.auth.loginTitle}</h1>
+        <p className="subtitle" style={{ marginBottom: 16 }}>{t.auth.loginSub}</p>
 
         {error && <div className="alert-banner alert-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="form-stack">
           <div className="form-group">
-            <label htmlFor="login-email">Email</label>
+            <label htmlFor="login-email">{t.auth.email}</label>
             <input
               id="login-email"
               type="email"
@@ -51,7 +51,7 @@ export default function LoginPage() {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="login-password">Password</label>
+            <label htmlFor="login-password">{t.auth.password}</label>
             <input
               id="login-password"
               type="password"
@@ -63,12 +63,12 @@ export default function LoginPage() {
             />
           </div>
           <button type="submit" className="btn btn-primary" disabled={submitting}>
-            {submitting ? "Signing in…" : "Sign In"}
+            {submitting ? t.auth.signingIn : t.auth.signInBtn}
           </button>
         </form>
 
         <p style={{ marginTop: 16, fontSize: 13, color: "var(--ink-secondary)" }}>
-          No account yet? <Link to="/register">Register here</Link>
+          {t.auth.noAccount} <Link to="/register">{t.auth.registerLink}</Link>
         </p>
       </div>
     </div>

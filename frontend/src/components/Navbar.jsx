@@ -1,24 +1,26 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Activity, LogOut, Menu, X } from "lucide-react";
+import { Activity, Languages, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Navbar() {
   const { user, role, signOut } = useAuth();
+  const { lang, toggleLang, t } = useLanguage();
   const [open, setOpen] = useState(false);
 
   const navItems = [
-    { to: "/", label: "Dashboard" },
-    { to: "/map", label: "Risk Map" },
-    { to: "/reports", label: "Community" },
-    { to: "/submit-report", label: "Submit Report" },
-    { to: "/my-alerts", label: "My Alerts" },
-    { to: "/methodology", label: "Methodology" },
-    { to: "/about", label: "About" },
+    { to: "/", label: t.nav.dashboard },
+    { to: "/map", label: t.nav.map },
+    { to: "/reports", label: t.nav.reports },
+    { to: "/submit-report", label: t.nav.submit },
+    { to: "/my-alerts", label: t.nav.alerts },
+    { to: "/methodology", label: t.nav.methodology },
+    { to: "/about", label: t.nav.about },
   ];
 
   if (user && (role === "moderator" || role === "admin")) {
-    navItems.push({ to: "/moderation", label: "Moderation" });
+    navItems.push({ to: "/moderation", label: t.nav.moderation });
   }
 
   return (
@@ -26,7 +28,7 @@ export default function Navbar() {
       <div className="topbar-inner">
         <NavLink to="/" className="brand" onClick={() => setOpen(false)}>
           <Activity size={18} color="var(--accent-primary)" />
-          <span>DengueSense</span>
+          <span>{t.brand}</span>
           <span className="brand-tag">BD-64</span>
         </NavLink>
 
@@ -43,18 +45,29 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="nav-auth">
+        <div className="nav-auth" style={{ gap: 8 }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={toggleLang}
+            aria-label="Toggle language"
+            title="Switch between English and বাংলা"
+          >
+            <Languages size={14} />
+            <span>{lang === "en" ? "বাংলা" : "EN"}</span>
+          </button>
+
           {user ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span className="meta-label mono">{role}</span>
               <button type="button" className="btn btn-secondary" onClick={signOut}>
-                <LogOut size={14} /> Sign Out
+                <LogOut size={14} /> {t.nav.signOut}
               </button>
             </div>
           ) : (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <NavLink to="/login" className="btn btn-secondary">Sign In</NavLink>
-              <NavLink to="/register" className="btn btn-primary">Register</NavLink>
+              <NavLink to="/login" className="btn btn-secondary">{t.nav.signIn}</NavLink>
+              <NavLink to="/register" className="btn btn-primary">{t.nav.register}</NavLink>
             </div>
           )}
         </div>
@@ -83,17 +96,20 @@ export default function Navbar() {
               {item.label}
             </NavLink>
           ))}
+          <button type="button" className="btn btn-secondary" onClick={toggleLang}>
+            <Languages size={14} /> {lang === "en" ? "বাংলায় দেখুন" : "Switch to English"}
+          </button>
           {user ? (
             <button
               type="button"
               className="btn btn-secondary"
               onClick={() => { signOut(); setOpen(false); }}
             >
-              Sign Out ({role})
+              {t.nav.signOut} ({role})
             </button>
           ) : (
             <NavLink to="/login" className="btn btn-primary" onClick={() => setOpen(false)}>
-              Sign In
+              {t.nav.signIn}
             </NavLink>
           )}
         </nav>

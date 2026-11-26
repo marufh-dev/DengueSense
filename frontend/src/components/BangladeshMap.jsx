@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer } from "react-leaflet";
+import { useLanguage } from "../context/LanguageContext";
 
 const RISK_FILL = {
   LOW: "#16a34a",
@@ -9,14 +10,6 @@ const RISK_FILL = {
   "NO DATA": "#94a3b8",
 };
 
-const LEGEND_ITEMS = [
-  { label: "CRITICAL (75–100)", color: RISK_FILL.CRITICAL },
-  { label: "HIGH (55–74)", color: RISK_FILL.HIGH },
-  { label: "MODERATE (30–54)", color: RISK_FILL.MODERATE },
-  { label: "LOW (0–29)", color: RISK_FILL.LOW },
-  { label: "NO DATA (Missing/Stale)", color: RISK_FILL["NO DATA"] },
-];
-
 export default function BangladeshMap({
   districts = [],
   reports = [],
@@ -24,7 +17,16 @@ export default function BangladeshMap({
   onSelectDistrict,
   height = "560px",
 }) {
+  const { lang, t } = useLanguage();
   const [geojson, setGeojson] = useState(null);
+
+  const legendItems = [
+    { label: t.risk.criticalRange, color: RISK_FILL.CRITICAL },
+    { label: t.risk.highRange, color: RISK_FILL.HIGH },
+    { label: t.risk.moderateRange, color: RISK_FILL.MODERATE },
+    { label: t.risk.lowRange, color: RISK_FILL.LOW },
+    { label: t.risk.noDataRange, color: RISK_FILL["NO DATA"] },
+  ];
 
   useEffect(() => {
     fetch("/data/bangladesh_districts.geojson")
@@ -59,15 +61,19 @@ export default function BangladeshMap({
   const onEachFeature = (feature, layer) => {
     const code = feature.properties?.district_code;
     const d = byCode[code];
-    const name = d?.name_en || feature.properties?.name_en;
+    const name =
+      lang === "bn"
+        ? d?.name_bn || feature.properties?.name_bn || d?.name_en
+        : d?.name_en || feature.properties?.name_en;
     const level = d?.risk_level || "NO DATA";
+    const levelLabel = t.risk[level] || level;
     const scoreText =
       d?.environmental_score !== null && d?.environmental_score !== undefined
         ? `${Number(d.environmental_score).toFixed(1)} / 100`
-        : "No data";
+        : t.risk["NO DATA"];
 
     layer.bindTooltip(
-      `<strong>${name}</strong><br/>EDSI: ${level} (${scoreText})`,
+      `<strong>${name}</strong><br/>EDSI: ${levelLabel} (${scoreText})`,
       { sticky: true }
     );
     layer.on("click", () => {
@@ -92,7 +98,7 @@ export default function BangladeshMap({
         />
         {geojson && (
           <GeoJSON
-            key={`${districts.length}-${selectedDistrictId || "none"}`}
+            key={`${lang}-${districts.length}-${selectedDistrictId || "none"}`}
             data={geojson}
             style={styleFeature}
             onEachFeature={onEachFeature}
@@ -121,8 +127,8 @@ export default function BangladeshMap({
       </MapContainer>
 
       <div className="map-legend" aria-label="Environmental suitability legend">
-        <div className="legend-title">EDSI Suitability</div>
-        {LEGEND_ITEMS.map((item) => (
+        <div className="legend-title">{t.risk.legendTitle}</div>
+        {legendItems.map((item) => (
           <div key={item.label} className="legend-row">
             <span className="legend-swatch" style={{ backgroundColor: item.color }} />
             <span>{item.label}</span>

@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, Database, MapPin } from "lucide-react";
 import { apiRequest } from "../api/client";
+import { useLanguage } from "../context/LanguageContext";
 import BangladeshMap from "../components/BangladeshMap";
 import DistrictDrawer from "../components/DistrictDrawer";
 import RiskBadge from "../components/RiskBadge";
 
 export default function DashboardPage() {
+  const { lang, t } = useLanguage();
   const [riskData, setRiskData] = useState(null);
   const [dataHealth, setDataHealth] = useState(null);
   const [reports, setReports] = useState([]);
@@ -50,17 +52,14 @@ export default function DashboardPage() {
     <div className="container">
       <div className="page-header">
         <div>
-          <h1>Bangladesh Environmental Dengue Suitability</h1>
-          <p className="subtitle">
-            Real-time meteorological suitability monitoring across all 64 districts (Open-Meteo +
-            geoBoundaries). Provisional V1 EDSI heuristic — not an infection probability.
-          </p>
+          <h1>{t.dashboard.title}</h1>
+          <p className="subtitle">{t.dashboard.subtitle}</p>
         </div>
         {latestLog && (
           <div className="freshness-pill">
             <CheckCircle2 size={14} color="var(--accent-primary)" />
             <span>
-              Last Ingest:{" "}
+              {t.dashboard.lastIngest}:{" "}
               <span className="mono tabular-nums">
                 {(latestLog.completed_at || latestLog.started_at || "").slice(0, 16).replace("T", " ")}
               </span>
@@ -73,31 +72,31 @@ export default function DashboardPage() {
 
       <section className="kpi-grid" aria-label="National summary metrics">
         <div className="card kpi-card">
-          <div className="kpi-label"><MapPin size={14} /> Total Districts</div>
+          <div className="kpi-label"><MapPin size={14} /> {t.dashboard.totalDistricts}</div>
           <div className="kpi-value tabular-nums">{riskData?.total_districts ?? "—"}</div>
-          <div className="kpi-sub tabular-nums">{withData} with environmental data</div>
+          <div className="kpi-sub tabular-nums">{withData} {t.dashboard.withData}</div>
         </div>
         <div className="card kpi-card">
-          <div className="kpi-label"><AlertTriangle size={14} color="var(--risk-high-text)" /> High Suitability</div>
+          <div className="kpi-label"><AlertTriangle size={14} color="var(--risk-high-text)" /> {t.dashboard.highSuitability}</div>
           <div className="kpi-value tabular-nums" style={{ color: "var(--risk-high-text)" }}>
             {summary.HIGH ?? "—"}
           </div>
           <div className="kpi-sub">EDSI 55.0 – 74.9</div>
         </div>
         <div className="card kpi-card">
-          <div className="kpi-label"><AlertTriangle size={14} color="var(--risk-critical-text)" /> Critical Suitability</div>
+          <div className="kpi-label"><AlertTriangle size={14} color="var(--risk-critical-text)" /> {t.dashboard.criticalSuitability}</div>
           <div className="kpi-value tabular-nums" style={{ color: "var(--risk-critical-text)" }}>
             {summary.CRITICAL ?? "—"}
           </div>
           <div className="kpi-sub">EDSI 75.0 – 100</div>
         </div>
         <div className="card kpi-card">
-          <div className="kpi-label"><Database size={14} /> Ingestion Status</div>
+          <div className="kpi-label"><Database size={14} /> {t.dashboard.ingestionStatus}</div>
           <div className="kpi-value" style={{ fontSize: "1.25rem", textTransform: "uppercase" }}>
             {latestLog?.status ?? "—"}
           </div>
           <div className="kpi-sub tabular-nums">
-            {latestLog ? `${latestLog.districts_updated} / 64 districts updated` : "Checking…"}
+            {latestLog ? `${latestLog.districts_updated} / 64 ${t.dashboard.districtsUpdated}` : "…"}
           </div>
         </div>
       </section>
@@ -119,12 +118,9 @@ export default function DashboardPage() {
 
       <section className="two-col-grid" style={{ marginTop: 24 }}>
         <div className="card">
-          <h2 style={{ marginTop: 0 }}>Recent Approved Community Reports</h2>
+          <h2 style={{ marginTop: 0 }}>{t.dashboard.recentReports}</h2>
           {reports.length === 0 ? (
-            <p className="muted-empty">
-              No approved community reports yet. Environmental suitability scores above are computed
-              from Open-Meteo weather observations.
-            </p>
+            <p className="muted-empty">{t.dashboard.noReports}</p>
           ) : (
             <ul className="simple-list">
               {reports.map((r) => (
@@ -142,15 +138,15 @@ export default function DashboardPage() {
         </div>
 
         <div className="card">
-          <h2 style={{ marginTop: 0 }}>Highest Suitability Districts</h2>
+          <h2 style={{ marginTop: 0 }}>{t.dashboard.topDistricts}</h2>
           <div className="table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>District</th>
-                  <th>Division</th>
-                  <th>EDSI</th>
-                  <th>Level</th>
+                  <th>{t.dashboard.colDistrict}</th>
+                  <th>{t.dashboard.colDivision}</th>
+                  <th>{t.dashboard.colEdsi}</th>
+                  <th>{t.dashboard.colLevel}</th>
                 </tr>
               </thead>
               <tbody>
@@ -163,7 +159,7 @@ export default function DashboardPage() {
                       onClick={() => handleSelectDistrict(d)}
                       style={{ cursor: "pointer" }}
                     >
-                      <td><strong>{d.name_en}</strong></td>
+                      <td><strong>{lang === "bn" ? d.name_bn || d.name_en : d.name_en}</strong></td>
                       <td>{d.division}</td>
                       <td className="tabular-nums mono">
                         {d.environmental_score !== null ? d.environmental_score.toFixed(1) : "—"}

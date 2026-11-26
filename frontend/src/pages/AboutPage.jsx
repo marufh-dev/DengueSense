@@ -1,31 +1,22 @@
+import { useLanguage } from "../context/LanguageContext";
+
 export default function AboutPage() {
+  const { t } = useLanguage();
+
   return (
     <div className="container">
-      <h1>About DengueSense</h1>
-      <p className="subtitle">
-        Open-data-driven environmental dengue early warning and community reporting across all 64
-        districts of Bangladesh.
-      </p>
+      <h1>{t.about.title}</h1>
+      <p className="subtitle">{t.about.subtitle}</p>
 
       <div className="two-col-grid" style={{ marginTop: 20 }}>
         <div className="card">
-          <h2 style={{ marginTop: 0 }}>Version 1 — Functional University MVP</h2>
-          <p>
-            Provides daily automated Open-Meteo weather &amp; air-quality ingestion in{" "}
-            <code>Asia/Dhaka</code>, a transparent rule-based EDSI suitability map over 64
-            validated geoBoundaries district polygons, privacy-preserving community reporting,
-            role-based moderation, and district alert subscriptions.
-          </p>
+          <h2 style={{ marginTop: 0 }}>{t.about.v1Title}</h2>
+          <p>{t.about.v1Body}</p>
         </div>
 
         <div className="card">
-          <h2 style={{ marginTop: 0 }}>Version 2 — AI/ML &amp; Research Roadmap</h2>
-          <p>
-            The PostgreSQL + PostGIS schema preserves clean, source-traceable daily observations for
-            future integration of DGHS/OpenDengue epidemiological ground truth, lagged ML/DL models
-            (XGBoost, LightGBM, LSTM, ST-GNN) with SHAP explainability, computer-vision photo
-            verification, and Sentinel-1 SAR waterlogging analysis.
-          </p>
+          <h2 style={{ marginTop: 0 }}>{t.about.v2Title}</h2>
+          <p>{t.about.v2Body}</p>
         </div>
       </div>
     </div>

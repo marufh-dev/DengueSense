@@ -13,10 +13,12 @@ import {
   YAxis,
 } from "recharts";
 import { apiRequest } from "../api/client";
+import { useLanguage } from "../context/LanguageContext";
 import RiskBadge from "../components/RiskBadge";
 
 export default function DistrictDetailPage() {
   const { id } = useParams();
+  const { lang, t } = useLanguage();
   const [days, setDays] = useState(30);
   const [detail, setDetail] = useState(null);
   const [history, setHistory] = useState(null);
@@ -49,7 +51,7 @@ export default function DistrictDetailPage() {
     <div className="container">
       <div style={{ marginBottom: 16 }}>
         <Link to="/" className="btn btn-secondary">
-          <ArrowLeft size={15} /> Back to Dashboard
+          <ArrowLeft size={15} /> {t.detail.back}
         </Link>
       </div>
 
@@ -57,12 +59,14 @@ export default function DistrictDetailPage() {
         <div className="page-header">
           <div>
             <h1>
-              {d.name_en}{" "}
-              {d.name_bn && <span style={{ color: "var(--ink-muted)", fontWeight: 400 }}>({d.name_bn})</span>}
+              {lang === "bn" ? d.name_bn || d.name_en : d.name_en}{" "}
+              {lang === "en" && d.name_bn && (
+                <span style={{ color: "var(--ink-muted)", fontWeight: 400 }}>({d.name_bn})</span>
+              )}
             </h1>
             <p className="subtitle">
-              {d.division} Division · Code <span className="mono">{d.district_code}</span> ·
-              Centroid <span className="mono tabular-nums">{d.centroid_lat}, {d.centroid_lon}</span>
+              {d.division} {t.drawer.division} · <span className="mono">{d.district_code}</span> ·{" "}
+              <span className="mono tabular-nums">{d.centroid_lat}, {d.centroid_lon}</span>
             </p>
           </div>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -72,10 +76,10 @@ export default function DistrictDetailPage() {
               className="input-field"
               value={days}
               onChange={(e) => setDays(Number(e.target.value))}
-              style={{ width: 130 }}
+              style={{ width: 150 }}
             >
-              <option value={30}>Last 30 days</option>
-              <option value={90}>Last 90 days</option>
+              <option value={30}>{t.detail.last30}</option>
+              <option value={90}>{t.detail.last90}</option>
             </select>
           </div>
         </div>
@@ -83,7 +87,7 @@ export default function DistrictDetailPage() {
 
       <div className="two-col-grid">
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Mean &amp; Max Temperature (°C)</h3>
+          <h3 style={{ marginTop: 0 }}>{t.detail.tempChart}</h3>
           <div style={{ width: "100%", height: 260 }}>
             <ResponsiveContainer>
               <LineChart data={weather}>
@@ -99,7 +103,7 @@ export default function DistrictDetailPage() {
         </div>
 
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Daily Precipitation (mm)</h3>
+          <h3 style={{ marginTop: 0 }}>{t.detail.rainChart}</h3>
           <div style={{ width: "100%", height: 260 }}>
             <ResponsiveContainer>
               <BarChart data={weather}>
@@ -114,7 +118,7 @@ export default function DistrictDetailPage() {
         </div>
 
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Relative Humidity (%)</h3>
+          <h3 style={{ marginTop: 0 }}>{t.detail.humidityChart}</h3>
           <div style={{ width: "100%", height: 260 }}>
             <ResponsiveContainer>
               <LineChart data={weather}>
@@ -129,9 +133,9 @@ export default function DistrictDetailPage() {
         </div>
 
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Supplementary Air Quality (PM2.5 µg/m³)</h3>
+          <h3 style={{ marginTop: 0 }}>{t.detail.aqChart}</h3>
           {aq.length === 0 ? (
-            <p className="muted-empty">No air-quality observations recorded for this period.</p>
+            <p className="muted-empty">{t.detail.noAq}</p>
           ) : (
             <div style={{ width: "100%", height: 260 }}>
               <ResponsiveContainer>

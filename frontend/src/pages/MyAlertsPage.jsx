@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Bell, Trash2 } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function MyAlertsPage() {
   const { token } = useAuth();
+  const { lang, t } = useLanguage();
   const [districts, setDistricts] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -60,7 +62,7 @@ export default function MyAlertsPage() {
           is_active: true,
         },
       });
-      setSuccess("Alert subscription saved.");
+      setSuccess(t.alerts.savedMsg);
       loadAlerts();
     } catch (err) {
       setError(err.message);
@@ -79,19 +81,17 @@ export default function MyAlertsPage() {
 
   return (
     <div className="container">
-      <h1>My District Alerts</h1>
-      <p className="subtitle">
-        Subscribe to automated environmental suitability notifications for selected districts.
-      </p>
+      <h1>{t.alerts.title}</h1>
+      <p className="subtitle">{t.alerts.subtitle}</p>
 
       {error && <div className="alert-banner alert-error" style={{ marginTop: 12 }}>{error}</div>}
       {success && <div className="alert-banner alert-success" style={{ marginTop: 12 }}>{success}</div>}
 
       <div className="two-col-grid" style={{ marginTop: 16 }}>
         <form onSubmit={handleSave} className="card form-stack">
-          <h2 style={{ marginTop: 0 }}>Add or Update Subscription</h2>
+          <h2 style={{ marginTop: 0 }}>{t.alerts.formTitle}</h2>
           <div className="form-group">
-            <label htmlFor="alert-dist">District</label>
+            <label htmlFor="alert-dist">{t.alerts.district}</label>
             <select
               id="alert-dist"
               className="input-field"
@@ -99,13 +99,15 @@ export default function MyAlertsPage() {
               onChange={(e) => setDistrictId(e.target.value)}
             >
               {districts.map((d) => (
-                <option key={d.id} value={d.id}>{d.name_en} ({d.division})</option>
+                <option key={d.id} value={d.id}>
+                  {lang === "bn" ? d.name_bn || d.name_en : d.name_en} ({d.division})
+                </option>
               ))}
             </select>
           </div>
 
           <div className="form-group">
-            <label htmlFor="alert-radius">Radius (km, optional)</label>
+            <label htmlFor="alert-radius">{t.alerts.radius}</label>
             <input
               id="alert-radius"
               type="number"
@@ -118,7 +120,7 @@ export default function MyAlertsPage() {
           </div>
 
           <div className="form-group">
-            <label>Notification Channels</label>
+            <label>{t.alerts.channels}</label>
             <div style={{ display: "flex", gap: 16 }}>
               <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <input
@@ -126,7 +128,7 @@ export default function MyAlertsPage() {
                   checked={channels.includes("email")}
                   onChange={() => toggleChannel("email")}
                 />
-                Email
+                {t.alerts.email}
               </label>
               <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <input
@@ -134,14 +136,14 @@ export default function MyAlertsPage() {
                   checked={channels.includes("telegram")}
                   onChange={() => toggleChannel("telegram")}
                 />
-                Telegram
+                {t.alerts.telegram}
               </label>
             </div>
           </div>
 
           {channels.includes("telegram") && (
             <div className="form-group">
-              <label htmlFor="alert-tg">Telegram Chat ID</label>
+              <label htmlFor="alert-tg">{t.alerts.telegramId}</label>
               <input
                 id="alert-tg"
                 type="text"
@@ -154,14 +156,14 @@ export default function MyAlertsPage() {
           )}
 
           <button type="submit" className="btn btn-primary">
-            <Bell size={14} /> Save Subscription
+            <Bell size={14} /> {t.alerts.saveBtn}
           </button>
         </form>
 
         <div className="card">
-          <h2 style={{ marginTop: 0 }}>Active Subscriptions</h2>
+          <h2 style={{ marginTop: 0 }}>{t.alerts.activeTitle}</h2>
           {subscriptions.length === 0 ? (
-            <p className="muted-empty">No active district alert subscriptions yet.</p>
+            <p className="muted-empty">{t.alerts.noSubs}</p>
           ) : (
             <ul className="simple-list">
               {subscriptions.map((s) => (
@@ -169,7 +171,7 @@ export default function MyAlertsPage() {
                   <div>
                     <strong>{s.districts?.name_en}</strong> ({s.districts?.division})
                     <div className="meta-label">
-                      Channels: {(s.notification_channels || []).join(", ")}
+                      {(s.notification_channels || []).join(", ")}
                       {s.radius_km ? ` · ${s.radius_km} km` : ""}
                     </div>
                   </div>
@@ -186,9 +188,9 @@ export default function MyAlertsPage() {
             </ul>
           )}
 
-          <h3 style={{ marginTop: 20 }}>Recent Notifications</h3>
+          <h3 style={{ marginTop: 20 }}>{t.alerts.historyTitle}</h3>
           {notifications.length === 0 ? (
-            <p className="muted-empty">No notifications dispatched yet.</p>
+            <p className="muted-empty">{t.alerts.noNotifs}</p>
           ) : (
             <ul className="simple-list">
               {notifications.map((n) => (

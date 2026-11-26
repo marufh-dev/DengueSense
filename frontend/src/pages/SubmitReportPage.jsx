@@ -3,6 +3,7 @@ import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
 import { Compass, Upload } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 
 function PinPicker({ position, onChange }) {
   useMapEvents({
@@ -15,6 +16,7 @@ function PinPicker({ position, onChange }) {
 
 export default function SubmitReportPage() {
   const { token } = useAuth();
+  const { lang, t } = useLanguage();
   const [districts, setDistricts] = useState([]);
   const [districtId, setDistrictId] = useState("");
   const [reportType, setReportType] = useState("WATERLOGGING");
@@ -74,7 +76,7 @@ export default function SubmitReportPage() {
         token,
         isFormData: true,
       });
-      setSuccess("Report submitted! It is now PENDING moderation and will expire after 14 days.");
+      setSuccess(t.submit.successMsg);
       setDescription("");
       setPhoto(null);
     } catch (err) {
@@ -86,11 +88,8 @@ export default function SubmitReportPage() {
 
   return (
     <div className="container">
-      <h1>Submit a Community Report</h1>
-      <p className="subtitle">
-        Report stagnant water, waterlogging, mosquito activity, or suspected dengue observations.
-        Exact coordinates are generalized before public display.
-      </p>
+      <h1>{t.submit.title}</h1>
+      <p className="subtitle">{t.submit.subtitle}</p>
 
       {error && <div className="alert-banner alert-error" style={{ marginTop: 12 }}>{error}</div>}
       {success && <div className="alert-banner alert-success" style={{ marginTop: 12 }}>{success}</div>}
@@ -98,22 +97,22 @@ export default function SubmitReportPage() {
       <div className="split-layout" style={{ marginTop: 16 }}>
         <form onSubmit={handleSubmit} className="card form-stack">
           <div className="form-group">
-            <label htmlFor="rep-category">Category</label>
+            <label htmlFor="rep-category">{t.submit.category}</label>
             <select
               id="rep-category"
               className="input-field"
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
             >
-              <option value="WATERLOGGING">Waterlogging</option>
-              <option value="STAGNANT_WATER">Stagnant Water</option>
-              <option value="MOSQUITO_ACTIVITY">Mosquito Activity</option>
-              <option value="SUSPECTED_DENGUE_REPORT">Suspected Dengue Report (Non-clinical)</option>
+              <option value="WATERLOGGING">{t.submit.types.WATERLOGGING}</option>
+              <option value="STAGNANT_WATER">{t.submit.types.STAGNANT_WATER}</option>
+              <option value="MOSQUITO_ACTIVITY">{t.submit.types.MOSQUITO_ACTIVITY}</option>
+              <option value="SUSPECTED_DENGUE_REPORT">{t.submit.types.SUSPECTED_DENGUE_REPORT}</option>
             </select>
           </div>
 
           <div className="form-group">
-            <label htmlFor="rep-district">District</label>
+            <label htmlFor="rep-district">{t.submit.district}</label>
             <select
               id="rep-district"
               className="input-field"
@@ -126,13 +125,15 @@ export default function SubmitReportPage() {
               }}
             >
               {districts.map((d) => (
-                <option key={d.id} value={d.id}>{d.name_en} ({d.division})</option>
+                <option key={d.id} value={d.id}>
+                  {lang === "bn" ? d.name_bn || d.name_en : d.name_en} ({d.division})
+                </option>
               ))}
             </select>
           </div>
 
           <div className="form-group">
-            <label htmlFor="rep-desc">Description (10–1000 chars)</label>
+            <label htmlFor="rep-desc">{t.submit.description}</label>
             <textarea
               id="rep-desc"
               className="input-field"
@@ -142,15 +143,15 @@ export default function SubmitReportPage() {
               maxLength={1000}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the stagnant water, drainage blockage, or mosquito activity..."
+              placeholder={t.submit.descPlaceholder}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="rep-photo">Optional Photo (JPEG, PNG, WebP · max 5 MB)</label>
+            <label htmlFor="rep-photo">{t.submit.photoLabel}</label>
             <label className="btn btn-secondary" style={{ width: "fit-content" }}>
               <Upload size={14} />
-              <span>{photo ? photo.name : "Choose image"}</span>
+              <span>{photo ? photo.name : t.submit.chooseImage}</span>
               <input
                 id="rep-photo"
                 type="file"
@@ -162,19 +163,20 @@ export default function SubmitReportPage() {
           </div>
 
           <div className="meta-label">
-            Selected Pin: <span className="mono tabular-nums">{pin[0].toFixed(4)}, {pin[1].toFixed(4)}</span>
+            {t.submit.selectedPin}:{" "}
+            <span className="mono tabular-nums">{pin[0].toFixed(4)}, {pin[1].toFixed(4)}</span>
           </div>
 
           <button type="submit" className="btn btn-primary" disabled={submitting}>
-            {submitting ? "Submitting…" : "Submit Report"}
+            {submitting ? t.submit.submitting : t.submit.submitBtn}
           </button>
         </form>
 
         <div className="card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <strong>Click Map to Place Pin</strong>
+            <strong>{t.submit.mapTitle}</strong>
             <button type="button" className="btn btn-secondary" onClick={handleUseLocation}>
-              <Compass size={14} /> Use My Location
+              <Compass size={14} /> {t.submit.useLocation}
             </button>
           </div>
           <div className="map-wrapper" style={{ height: 380 }}>
