@@ -20,3 +20,10 @@ class Config:
     FLASK_ENV: str = os.getenv("FLASK_ENV", "development")
     PORT: int = int(os.getenv("PORT", "5001"))
     MAX_CONTENT_LENGTH: int = 6 * 1024 * 1024
+
+    # V1 Environmental Dengue Suitability Engine (normalized weights summing to 1.0)
+    ENV_WEIGHT_RAINFALL: float = 0.4375
+    ENV_WEIGHT_TEMPERATURE: float = 0.3125
+    ENV_WEIGHT_HUMIDITY: float = 0.2500
+    RAINFALL_LAG_DAYS: int = 21
+    MODEL_VERSION: str = "v1-heuristic-1.0"
