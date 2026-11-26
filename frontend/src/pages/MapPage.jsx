@@ -1,0 +1,80 @@
+import { useEffect, useMemo, useState } from "react";
+import { apiRequest } from "../api/client";
+import BangladeshMap from "../components/BangladeshMap";
+import DistrictDrawer from "../components/DistrictDrawer";
+
+export default function MapPage() {
+  const [districts, setDistricts] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [division, setDivision] = useState("ALL");
+  const [selected, setSelected] = useState(null);
+  const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    Promise.all([apiRequest("/api/districts/risk"), apiRequest("/api/reports?limit=50")])
+      .then(([rk, rep]) => {
+        setDistricts(rk.districts || []);
+        setReports(rep.reports || []);
+      })
+      .catch(() => {});
+  }, []);
+
+  const divisions = useMemo(() => {
+    return ["ALL", ...Array.from(new Set(districts.map((d) => d.division))).sort()];
+  }, [districts]);
+
+  const filtered = useMemo(() => {
+    if (division === "ALL") return districts;
+    return districts.filter((d) => d.division === division);
+  }, [districts, division]);
+
+  const handleSelect = (d) => {
+    setSelected(d);
+    setLoading(true);
+    apiRequest(`/api/districts/${d.id}`)
+      .then(setDetail)
+      .catch(() => setDetail(null))
+      .finally(() => setLoading(false));
+  };
+
+  return (
+    <div className="container">
+      <div className="page-header">
+        <div>
+          <h1>64-District Environmental Suitability Map</h1>
+          <p className="subtitle">Filter by division or click any district polygon for details.</p>
+        </div>
+        <div className="filter-row">
+          <label htmlFor="div-filter" className="meta-label">Division:</label>
+          <select
+            id="div-filter"
+            className="input-field"
+            value={division}
+            onChange={(e) => setDivision(e.target.value)}
+            style={{ width: 180 }}
+          >
+            {divisions.map((div) => (
+              <option key={div} value={div}>{div}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="split-layout">
+        <div className="map-col">
+          <BangladeshMap
+            districts={filtered}
+            reports={reports}
+            selectedDistrictId={selected?.id}
+            onSelectDistrict={handleSelect}
+            height="620px"
+          />
+        </div>
+        <div className="drawer-col">
+          <DistrictDrawer district={selected} detail={detail} loading={loading} />
+        </div>
+      </div>
+    </div>
+  );
+}
