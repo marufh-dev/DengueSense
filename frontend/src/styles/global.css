@@ -113,7 +113,7 @@ a:hover {
 }
 
 .mobile-menu-btn {
-  display: none;
+  display: none !important;
 }
 
 .mobile-nav {
@@ -487,8 +487,15 @@ a:hover {
   color: var(--ink-secondary);
 }
 
+.nav-actions,
 .nav-auth,
 .nav-auth-public {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-user-actions {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -709,11 +716,12 @@ a:hover {
 
 @media (max-width: 899px) {
   .nav-links,
+  .nav-user-actions,
   .nav-auth {
     display: none !important;
   }
   .mobile-menu-btn {
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
   }

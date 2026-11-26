@@ -45,10 +45,10 @@ export default function Navbar() {
           </nav>
         )}
 
-        <div className={user ? "nav-auth" : "nav-auth-public"}>
+        <div className="nav-actions">
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-secondary nav-lang-btn"
             onClick={toggleLang}
             aria-label="Toggle language"
             title="Switch between English and বাংলা"
@@ -58,26 +58,26 @@ export default function Navbar() {
           </button>
 
           {user && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="nav-user-actions">
               <span className="meta-label mono">{role}</span>
               <button type="button" className="btn btn-secondary" onClick={signOut}>
                 <LogOut size={14} /> {t.nav.signOut}
               </button>
             </div>
           )}
-        </div>
 
-        {user && (
-          <button
-            type="button"
-            className="btn btn-ghost mobile-menu-btn"
-            aria-label={open ? "Close navigation menu" : "Open navigation menu"}
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-          >
-            {open ? <X size={18} /> : <Menu size={18} />}
-          </button>
-        )}
+          {user && (
+            <button
+              type="button"
+              className="btn btn-ghost mobile-menu-btn"
+              aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={open}
+              onClick={() => setOpen((v) => !v)}
+            >
+              {open ? <X size={18} /> : <Menu size={18} />}
+            </button>
+          )}
+        </div>
       </div>
 
       {user && open && (
