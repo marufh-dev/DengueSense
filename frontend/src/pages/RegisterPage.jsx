@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Activity, Bell, MapPin, ShieldCheck } from "lucide-react";
+import { Activity, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -10,6 +10,7 @@ export default function RegisterPage() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -31,75 +32,94 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="container welcome-shell">
-      <div className="welcome-grid">
-        <section className="welcome-hero">
-          <div className="welcome-pill">
-            <Activity size={14} color="var(--accent-primary)" />
-            <span>{t.auth.welcomeBadge}</span>
-          </div>
-          <h1>{t.auth.welcomeTitle}</h1>
-          <p className="welcome-desc">{t.auth.welcomeDesc}</p>
-          <ul className="welcome-features">
-            <li><ShieldCheck size={16} color="var(--accent-primary)" /> <span>{t.auth.welcomeF1}</span></li>
-            <li><MapPin size={16} color="var(--accent-primary)" /> <span>{t.auth.welcomeF2}</span></li>
-            <li><Bell size={16} color="var(--accent-primary)" /> <span>{t.auth.welcomeF3}</span></li>
-          </ul>
-        </section>
+    <div className="auth02-stage">
+      <section className="auth02-wrap" aria-labelledby="auth02-reg-title">
+        <div className="auth02-card">
+          <span className="auth02-mark" aria-hidden="true">
+            <Activity size={22} color="#ffffff" />
+          </span>
 
-        <section className="card welcome-card">
-          <h2 style={{ marginTop: 0, fontSize: "1.3rem" }}>{t.auth.regTitle}</h2>
-          <p className="subtitle" style={{ marginBottom: 16 }}>{t.auth.regSub}</p>
+          <h1 className="auth02-title" id="auth02-reg-title">
+            {t.auth.regTitle}
+          </h1>
+          <p className="auth02-sub">{t.auth.regSub}</p>
 
-          {error && <div className="alert-banner alert-error">{error}</div>}
-          {success && <div className="alert-banner alert-success">{success}</div>}
+          {error && <div className="alert-banner alert-error" style={{ textAlign: "left" }}>{error}</div>}
+          {success && <div className="alert-banner alert-success" style={{ textAlign: "left" }}>{success}</div>}
 
-          <form onSubmit={handleSubmit} className="form-stack">
-            <div className="form-group">
-              <label htmlFor="reg-name">{t.auth.displayName}</label>
+          <form className="auth02-form" onSubmit={handleSubmit}>
+            <div className="auth02-field">
+              <label className="auth02-label" htmlFor="reg-name">
+                {t.auth.displayName}
+              </label>
               <input
+                className="auth02-input"
                 id="reg-name"
                 type="text"
-                className="input-field"
                 required
                 minLength={2}
+                placeholder="Your name"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="reg-email">{t.auth.email}</label>
+
+            <div className="auth02-field">
+              <label className="auth02-label" htmlFor="reg-email">
+                {t.auth.email}
+              </label>
               <input
+                className="auth02-input"
                 id="reg-email"
                 type="email"
-                className="input-field"
+                autoComplete="email"
                 required
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="reg-password">{t.auth.passMin}</label>
-              <input
-                id="reg-password"
-                type="password"
-                className="input-field"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+
+            <div className="auth02-field">
+              <label className="auth02-label" htmlFor="reg-password">
+                {t.auth.passMin}
+              </label>
+              <div className="auth02-pw">
+                <input
+                  className="auth02-input"
+                  id="reg-password"
+                  type={showPw ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="auth02-eye"
+                  aria-label={showPw ? "Hide password" : "Show password"}
+                  aria-pressed={showPw}
+                  onClick={() => setShowPw((v) => !v)}
+                >
+                  {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
+
+            <button className="auth02-submit" type="submit" disabled={submitting}>
               {submitting ? t.auth.creating : t.auth.regBtn}
             </button>
           </form>
+        </div>
 
-          <p style={{ marginTop: 16, marginBottom: 0, fontSize: 13, color: "var(--ink-secondary)" }}>
-            {t.auth.haveAccount} <Link to="/login">{t.auth.signInLink}</Link>
-          </p>
-        </section>
-      </div>
+        <p className="auth02-foot">
+          {t.auth.haveAccount}{" "}
+          <Link className="auth02-link" to="/login">
+            {t.auth.signInLink}
+          </Link>
+        </p>
+      </section>
     </div>
   );
 }
