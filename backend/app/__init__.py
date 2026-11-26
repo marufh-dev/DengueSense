@@ -4,6 +4,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from app.config import Config
 from app.routes.alerts import alerts_bp
+from app.routes.auth_routes import auth_bp
 from app.routes.data_health import data_health_bp
 from app.routes.districts import districts_bp
 from app.routes.health import health_bp
@@ -33,6 +34,7 @@ def create_app() -> Flask:
         return response
 
     app.register_blueprint(health_bp)
+    app.register_blueprint(auth_bp)
     app.register_blueprint(districts_bp)
     app.register_blueprint(reports_bp)
     app.register_blueprint(moderation_bp)

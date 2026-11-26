@@ -1,16 +1,24 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Activity, Menu, X } from "lucide-react";
-
-const NAV_ITEMS = [
-  { to: "/", label: "Dashboard" },
-  { to: "/map", label: "Risk Map" },
-  { to: "/methodology", label: "Data & Methodology" },
-  { to: "/about", label: "About" },
-];
+import { Activity, LogOut, Menu, X } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
+  const { user, role, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+
+  const navItems = [
+    { to: "/", label: "Dashboard" },
+    { to: "/map", label: "Risk Map" },
+    { to: "/reports", label: "Community" },
+    { to: "/submit-report", label: "Submit Report" },
+    { to: "/methodology", label: "Methodology" },
+    { to: "/about", label: "About" },
+  ];
+
+  if (user && (role === "moderator" || role === "admin")) {
+    navItems.push({ to: "/moderation", label: "Moderation" });
+  }
 
   return (
     <header className="topbar">
@@ -22,7 +30,7 @@ export default function Navbar() {
         </NavLink>
 
         <nav className="nav-links" aria-label="Primary navigation">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -33,6 +41,22 @@ export default function Navbar() {
             </NavLink>
           ))}
         </nav>
+
+        <div className="nav-auth">
+          {user ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span className="meta-label mono">{role}</span>
+              <button type="button" className="btn btn-secondary" onClick={signOut}>
+                <LogOut size={14} /> Sign Out
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <NavLink to="/login" className="btn btn-secondary">Sign In</NavLink>
+              <NavLink to="/register" className="btn btn-primary">Register</NavLink>
+            </div>
+          )}
+        </div>
 
         <button
           type="button"
@@ -47,7 +71,7 @@ export default function Navbar() {
 
       {open && (
         <nav className="mobile-nav" aria-label="Mobile navigation">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -58,6 +82,19 @@ export default function Navbar() {
               {item.label}
             </NavLink>
           ))}
+          {user ? (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => { signOut(); setOpen(false); }}
+            >
+              Sign Out ({role})
+            </button>
+          ) : (
+            <NavLink to="/login" className="btn btn-primary" onClick={() => setOpen(false)}>
+              Sign In
+            </NavLink>
+          )}
         </nav>
       )}
     </header>

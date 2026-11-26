@@ -1,12 +1,15 @@
 """Backend unit, API, and negative security tests."""
 
+import os
 import sys
+import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app import create_app
 from app.config import Config
+from app.db import get_anon_client, get_service_client
 from app.risk_engine import (
     calculate_community_signal,
     calculate_environmental_score,
@@ -69,6 +72,7 @@ def test_api_security_unauthenticated_rejected():
     app = create_app()
     client = app.test_client()
 
+    assert client.get("/api/auth/me").status_code == 401
     assert client.post("/api/reports", json={}).status_code == 401
     assert client.post("/api/reports/00000000-0000-0000-0000-000000000000/vote", json={"vote": 1}).status_code == 401
     assert client.get("/api/moderation/reports").status_code == 401
@@ -76,3 +80,68 @@ def test_api_security_unauthenticated_rejected():
     assert client.get("/api/alerts").status_code == 401
     assert client.post("/api/alerts", json={}).status_code == 401
     assert client.delete("/api/alerts/00000000-0000-0000-0000-000000000000").status_code == 401
+
+
+def test_authenticated_citizen_reporting_and_rbac():
+    svc = get_service_client()
+    anon = get_anon_client()
+    email = f"qa_{uuid.uuid4().hex[:8]}@denguesense.test"
+    password = "TestPassword!2026"
+
+    created = svc.auth.admin.create_user({
+        "email": email,
+        "password": password,
+        "email_confirm": True,
+        "user_metadata": {"display_name": "QA Citizen"},
+    })
+    uid = str(created.user.id)
+    try:
+        signed = anon.auth.sign_in_with_password({"email": email, "password": password})
+        token = signed.session.access_token
+        headers = {"Authorization": f"Bearer {token}"}
+
+        app = create_app()
+        client = app.test_client()
+
+        me = client.get("/api/auth/me", headers=headers)
+        assert me.status_code == 200
+        assert me.get_json()["role"] == "citizen"
+
+        # Citizen must get 403 on moderation
+        mod_denied = client.get("/api/moderation/reports", headers=headers)
+        assert mod_denied.status_code == 403
+
+        # Valid report creation -> 201 PENDING + generalized coords
+        dhaka = svc.table("districts").select("id").eq("name_en", "Dhaka").single().execute().data
+        rep = client.post(
+            "/api/reports",
+            json={
+                "district_id": dhaka["id"],
+                "report_type": "WATERLOGGING",
+                "latitude": 23.81234,
+                "longitude": 90.41567,
+                "description": "QA test stagnant water drainage check",
+            },
+            headers=headers,
+        )
+        assert rep.status_code == 201
+        rep_json = rep.get_json()["report"]
+        assert rep_json["status"] == "PENDING"
+        assert rep_json["latitude"] == 23.81
+        assert rep_json["longitude"] == 90.42
+
+        # Duplicate report within 24h -> 409
+        dup = client.post(
+            "/api/reports",
+            json={
+                "district_id": dhaka["id"],
+                "report_type": "WATERLOGGING",
+                "latitude": 23.81234,
+                "longitude": 90.41567,
+                "description": "Duplicate QA test report",
+            },
+            headers=headers,
+        )
+        assert dup.status_code == 409
+    finally:
+        svc.auth.admin.delete_user(uid)
