@@ -34,7 +34,7 @@ def get_optional_user():
             .maybe_single()
             .execute()
         )
-        profile = prof.data or {"id": str(user.id), "role": "citizen", "display_name": None}
+        profile = (prof.data if prof else None) or {"id": str(user.id), "role": "citizen", "display_name": None}
         g.current_user = {
             "id": str(user.id),
             "email": user.email,

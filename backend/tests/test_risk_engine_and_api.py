@@ -143,5 +143,24 @@ def test_authenticated_citizen_reporting_and_rbac():
             headers=headers,
         )
         assert dup.status_code == 409
+
+        # Alert subscription CRUD + 404 on non-existent/unowned delete
+        sub_res = client.post(
+            "/api/alerts",
+            json={"district_id": dhaka["id"], "radius_km": 15, "notification_channels": ["email"]},
+            headers=headers,
+        )
+        assert sub_res.status_code == 201
+        sub_id = sub_res.get_json()["subscription"]["id"]
+
+        list_res = client.get("/api/alerts", headers=headers)
+        assert list_res.status_code == 200
+        assert len(list_res.get_json()["subscriptions"]) == 1
+
+        not_found_del = client.delete("/api/alerts/00000000-0000-0000-0000-000000000000", headers=headers)
+        assert not_found_del.status_code == 404
+
+        del_res = client.delete(f"/api/alerts/{sub_id}", headers=headers)
+        assert del_res.status_code == 200
     finally:
         svc.auth.admin.delete_user(uid)

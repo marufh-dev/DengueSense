@@ -96,7 +96,7 @@ def get_district_detail(district_id: str):
         .maybe_single()
         .execute()
     )
-    if not d_res.data:
+    if not d_res or not d_res.data:
         return jsonify({"error": "District not found"}), 404
 
     risk_res = (
@@ -146,7 +146,7 @@ def get_district_detail(district_id: str):
 def get_district_history(district_id: str):
     svc = get_service_client()
     d_res = svc.table("districts").select("id, name_en").eq("id", district_id).maybe_single().execute()
-    if not d_res.data:
+    if not d_res or not d_res.data:
         return jsonify({"error": "District not found"}), 404
 
     try:

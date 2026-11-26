@@ -126,7 +126,7 @@ def create_report():
 
     # Verify district exists
     dist = svc.table("districts").select("id").eq("id", district_id).maybe_single().execute()
-    if not dist.data:
+    if not dist or not dist.data:
         return jsonify({"error": "Invalid district_id"}), 400
 
     # Duplicate prevention: same user + district + type within 24 hours
@@ -214,7 +214,7 @@ def vote_report(report_id: str):
         return jsonify({"error": "vote must be 1 or -1"}), 400
 
     rep = svc.table("crowd_reports").select("id, status").eq("id", report_id).maybe_single().execute()
-    if not rep.data or rep.data["status"] != "APPROVED":
+    if not rep or not rep.data or rep.data["status"] != "APPROVED":
         return jsonify({"error": "Report not found"}), 404
 
     existing = (
@@ -225,7 +225,7 @@ def vote_report(report_id: str):
         .maybe_single()
         .execute()
     )
-    if existing.data:
+    if existing and existing.data:
         return jsonify({"error": "You have already voted on this report"}), 409
 
     svc.table("report_votes").insert({
@@ -251,7 +251,7 @@ def get_report_photo(report_id: str):
         .maybe_single()
         .execute()
     )
-    if not rep.data or not rep.data.get("photo_path"):
+    if not rep or not rep.data or not rep.data.get("photo_path"):
         return jsonify({"error": "Photo not found"}), 404
 
     row = rep.data

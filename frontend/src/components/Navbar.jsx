@@ -12,6 +12,7 @@ export default function Navbar() {
     { to: "/map", label: "Risk Map" },
     { to: "/reports", label: "Community" },
     { to: "/submit-report", label: "Submit Report" },
+    { to: "/my-alerts", label: "My Alerts" },
     { to: "/methodology", label: "Methodology" },
     { to: "/about", label: "About" },
   ];

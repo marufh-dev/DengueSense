@@ -35,7 +35,7 @@ def moderate_report(report_id: str):
         return jsonify({"error": "action must be APPROVE or REJECT"}), 400
 
     rep = svc.table("crowd_reports").select("id, status, district_id").eq("id", report_id).maybe_single().execute()
-    if not rep.data:
+    if not rep or not rep.data:
         return jsonify({"error": "Report not found"}), 404
 
     prev_status = rep.data["status"]

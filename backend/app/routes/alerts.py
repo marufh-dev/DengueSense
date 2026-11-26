@@ -42,7 +42,7 @@ def upsert_alert():
 
     district_id = str(body.get("district_id", "")).strip()
     dist = svc.table("districts").select("id").eq("id", district_id).maybe_single().execute()
-    if not dist.data:
+    if not dist or not dist.data:
         return jsonify({"error": "Invalid district_id"}), 400
 
     channels = [c for c in (body.get("notification_channels") or ["email"]) if c in VALID_CHANNELS]
@@ -87,7 +87,7 @@ def delete_alert(sub_id: str):
         .maybe_single()
         .execute()
     )
-    if not existing.data:
+    if not existing or not existing.data:
         return jsonify({"error": "Alert subscription not found"}), 404
 
     svc.table("alert_subscriptions").delete().eq("id", sub_id).eq("user_id", user["id"]).execute()

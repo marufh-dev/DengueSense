@@ -7,6 +7,7 @@ import DistrictDetailPage from "./pages/DistrictDetailPage";
 import CommunityReportsPage from "./pages/CommunityReportsPage";
 import SubmitReportPage from "./pages/SubmitReportPage";
 import ModerationPage from "./pages/ModerationPage";
+import MyAlertsPage from "./pages/MyAlertsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import MethodologyPage from "./pages/MethodologyPage";
@@ -35,6 +36,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["moderator", "admin"]}>
                 <ModerationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-alerts"
+            element={
+              <ProtectedRoute>
+                <MyAlertsPage />
               </ProtectedRoute>
             }
           />
