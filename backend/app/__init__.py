@@ -1,8 +1,14 @@
-"""Flask application factory with security headers and restricted CORS."""
+"""Flask application factory with security headers, restricted CORS, and Blueprints."""
 
 from flask import Flask, jsonify
 from flask_cors import CORS
 from app.config import Config
+from app.routes.alerts import alerts_bp
+from app.routes.data_health import data_health_bp
+from app.routes.districts import districts_bp
+from app.routes.health import health_bp
+from app.routes.moderation import moderation_bp
+from app.routes.reports import reports_bp
 
 
 def create_app() -> Flask:
@@ -26,9 +32,12 @@ def create_app() -> Flask:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
 
-    @app.route("/api/health", methods=["GET"])
-    def health():
-        return jsonify({"status": "ok", "service": "denguesense-api"}), 200
+    app.register_blueprint(health_bp)
+    app.register_blueprint(districts_bp)
+    app.register_blueprint(reports_bp)
+    app.register_blueprint(moderation_bp)
+    app.register_blueprint(alerts_bp)
+    app.register_blueprint(data_health_bp)
 
     @app.errorhandler(404)
     def not_found(_err):
