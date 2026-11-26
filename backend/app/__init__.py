@@ -1,6 +1,6 @@
 """Flask application factory with security headers, restricted CORS, and Blueprints."""
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from app.config import Config
 from app.routes.alerts import alerts_bp
@@ -29,6 +29,9 @@ def create_app() -> Flask:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+        if request.path.startswith(("/api/auth", "/api/alerts", "/api/moderation")):
+            response.headers["Cache-Control"] = "no-store"
         if Config.FLASK_ENV == "production":
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
