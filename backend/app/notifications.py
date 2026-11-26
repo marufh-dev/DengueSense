@@ -72,7 +72,7 @@ def dispatch_high_risk_alerts() -> dict[str, int]:
     risk_by_dist = {r["district_id"]: r for r in risk_rows}
     subs = (
         svc.table("alert_subscriptions")
-        .select("id, user_id, district_id, notification_channels, telegram_chat_id, is_active")
+        .select("id, user_id, district_id, notification_channels, email, telegram_chat_id, is_active")
         .eq("is_active", True)
         .in_("district_id", list(risk_by_dist.keys()))
         .execute()
@@ -115,11 +115,13 @@ def dispatch_high_risk_alerts() -> dict[str, int]:
                 if channel == "telegram" and sub.get("telegram_chat_id"):
                     delivered = send_telegram_message(sub["telegram_chat_id"], msg_text)
                 elif channel == "email":
-                    user_obj = svc.auth.admin.get_user_by_id(sub["user_id"])
-                    email = getattr(getattr(user_obj, "user", None), "email", None)
-                    if email:
+                    dest_email = sub.get("email")
+                    if not dest_email:
+                        user_obj = svc.auth.admin.get_user_by_id(sub["user_id"])
+                        dest_email = getattr(getattr(user_obj, "user", None), "email", None)
+                    if dest_email:
                         delivered = send_email_message(
-                            email,
+                            dest_email,
                             f"[DengueSense] {level} Environmental Suitability — {dist_name}",
                             msg_text,
                         )

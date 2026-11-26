@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function MyAlertsPage() {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const { lang, t } = useLanguage();
   const [districts, setDistricts] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -13,9 +13,16 @@ export default function MyAlertsPage() {
   const [districtId, setDistrictId] = useState("");
   const [radiusKm, setRadiusKm] = useState("10");
   const [channels, setChannels] = useState(["email"]);
+  const [email, setEmail] = useState(user?.email || "");
   const [telegramChatId, setTelegramChatId] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (user?.email && !email) {
+      setEmail(user.email);
+    }
+  }, [user]);
 
   const loadAlerts = () => {
     apiRequest("/api/alerts", { token })
@@ -50,6 +57,22 @@ export default function MyAlertsPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!channels || channels.length === 0) {
+      setError(t.alerts.channelRequired);
+      return;
+    }
+
+    if (channels.includes("email") && !email.trim()) {
+      setError(t.alerts.emailRequired);
+      return;
+    }
+
+    if (channels.includes("telegram") && !telegramChatId.trim()) {
+      setError(t.alerts.telegramRequired);
+      return;
+    }
+
     try {
       await apiRequest("/api/alerts", {
         method: "POST",
@@ -57,8 +80,9 @@ export default function MyAlertsPage() {
         body: {
           district_id: districtId,
           radius_km: radiusKm ? Number(radiusKm) : null,
-          notification_channels: channels.length ? channels : ["email"],
-          telegram_chat_id: telegramChatId.trim() || null,
+          notification_channels: channels,
+          email: channels.includes("email") ? email.trim() : null,
+          telegram_chat_id: channels.includes("telegram") ? telegramChatId.trim() : null,
           is_active: true,
         },
       });
@@ -122,7 +146,7 @@ export default function MyAlertsPage() {
           <div className="form-group">
             <label>{t.alerts.channels}</label>
             <div style={{ display: "flex", gap: 16 }}>
-              <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                 <input
                   type="checkbox"
                   checked={channels.includes("email")}
@@ -130,7 +154,7 @@ export default function MyAlertsPage() {
                 />
                 {t.alerts.email}
               </label>
-              <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                 <input
                   type="checkbox"
                   checked={channels.includes("telegram")}
@@ -141,6 +165,21 @@ export default function MyAlertsPage() {
             </div>
           </div>
 
+          {channels.includes("email") && (
+            <div className="form-group">
+              <label htmlFor="alert-email">{t.alerts.emailAddress}</label>
+              <input
+                id="alert-email"
+                type="email"
+                className="input-field"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t.alerts.emailPlaceholder}
+                required
+              />
+            </div>
+          )}
+
           {channels.includes("telegram") && (
             <div className="form-group">
               <label htmlFor="alert-tg">{t.alerts.telegramId}</label>
@@ -150,7 +189,8 @@ export default function MyAlertsPage() {
                 className="input-field"
                 value={telegramChatId}
                 onChange={(e) => setTelegramChatId(e.target.value)}
-                placeholder="e.g. 123456789"
+                placeholder={t.alerts.telegramPlaceholder}
+                required
               />
             </div>
           )}
@@ -169,11 +209,17 @@ export default function MyAlertsPage() {
               {subscriptions.map((s) => (
                 <li key={s.id} className="simple-list-item" style={{ alignItems: "center" }}>
                   <div>
-                    <strong>{s.districts?.name_en}</strong> ({s.districts?.division})
-                    <div className="meta-label">
+                    <strong>{lang === "bn" ? s.districts?.name_bn || s.districts?.name_en : s.districts?.name_en}</strong> ({s.districts?.division})
+                    <div className="meta-label" style={{ marginTop: 2 }}>
                       {(s.notification_channels || []).join(", ")}
                       {s.radius_km ? ` · ${s.radius_km} km` : ""}
                     </div>
+                    {(s.email || s.telegram_chat_id) && (
+                      <div className="meta-label mono" style={{ marginTop: 2, fontSize: 11 }}>
+                        {s.email && <span style={{ marginRight: 8 }}>✉️ {s.email}</span>}
+                        {s.telegram_chat_id && <span>✈️ ID: {s.telegram_chat_id}</span>}
+                      </div>
+                    )}
                   </div>
                   <button
                     type="button"
