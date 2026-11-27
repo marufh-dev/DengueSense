@@ -28,16 +28,47 @@ def send_telegram_message(chat_id: str, text: str) -> bool:
         timeout=15,
     )
     resp.raise_for_status()
+    logger.info("Telegram message sent successfully to chat_id=%s", chat_id)
     return True
 
 
 def send_email_message(to_email: str, subject: str, body: str) -> bool:
+    resend_key = os.getenv("RESEND_API_KEY", "").strip()
     host = os.getenv("SMTP_HOST", "").strip()
     user = os.getenv("SMTP_USER", "").strip()
     password = os.getenv("SMTP_PASSWORD", "").strip()
-    sender = os.getenv("SMTP_FROM", user).strip()
-    port = int(os.getenv("SMTP_PORT", "587"))
-    if not host or not user or not password or not to_email:
+    sender = os.getenv("SMTP_FROM", "onboarding@resend.dev").strip() or "onboarding@resend.dev"
+    port = int(os.getenv("SMTP_PORT", "465"))
+
+    if not to_email:
+        return False
+
+    # 1. Try Resend HTTP API if key is present (fastest & bypasses ISP port blocks)
+    if resend_key:
+        try:
+            resp = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {resend_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": sender,
+                    "to": [to_email],
+                    "subject": subject,
+                    "text": body,
+                },
+                timeout=15,
+            )
+            if resp.status_code in (200, 201):
+                logger.info("Email delivered to %s via Resend API", to_email)
+                return True
+            logger.warning("Resend API failed (%s): %s; falling back to SMTP", resp.status_code, resp.text)
+        except Exception as exc:
+            logger.warning("Resend API request exception: %s; falling back to SMTP", exc)
+
+    # 2. Try SMTP
+    if not host or not user or not password:
         return False
 
     msg = EmailMessage()
@@ -46,11 +77,21 @@ def send_email_message(to_email: str, subject: str, body: str) -> bool:
     msg["Subject"] = subject
     msg.set_content(body)
 
-    with smtplib.SMTP(host, port, timeout=15) as server:
-        server.starttls()
-        server.login(user, password)
-        server.send_message(msg)
-    return True
+    try:
+        if port == 465:
+            with smtplib.SMTP_SSL(host, port, timeout=15) as server:
+                server.login(user, password)
+                server.send_message(msg)
+        else:
+            with smtplib.SMTP(host, port, timeout=15) as server:
+                server.starttls()
+                server.login(user, password)
+                server.send_message(msg)
+        logger.info("Email delivered to %s via SMTP (%s:%d)", to_email, host, port)
+        return True
+    except Exception as smtp_exc:
+        logger.error("SMTP delivery failed for %s: %s", to_email, smtp_exc)
+        return False
 
 
 def dispatch_high_risk_alerts(force: bool = False) -> dict[str, int]:
