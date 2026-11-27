@@ -22,6 +22,10 @@ export default function Navbar() {
     navItems.push({ to: "/moderation", label: t.nav.moderation });
   }
 
+  if (user && role === "admin") {
+    navItems.push({ to: "/admin", label: t.nav.admin });
+  }
+
   return (
     <header className="topbar">
       <div className="topbar-inner">

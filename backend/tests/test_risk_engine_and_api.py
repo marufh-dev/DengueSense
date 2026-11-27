@@ -80,6 +80,8 @@ def test_api_security_unauthenticated_rejected():
     assert client.get("/api/alerts").status_code == 401
     assert client.post("/api/alerts", json={}).status_code == 401
     assert client.delete("/api/alerts/00000000-0000-0000-0000-000000000000").status_code == 401
+    assert client.get("/api/admin/overview").status_code == 401
+    assert client.get("/api/admin/users").status_code == 401
 
 
 def test_authenticated_citizen_reporting_and_rbac():
@@ -107,9 +109,11 @@ def test_authenticated_citizen_reporting_and_rbac():
         assert me.status_code == 200
         assert me.get_json()["role"] == "citizen"
 
-        # Citizen must get 403 on moderation
+        # Citizen must get 403 on moderation and admin
         mod_denied = client.get("/api/moderation/reports", headers=headers)
         assert mod_denied.status_code == 403
+        admin_denied = client.get("/api/admin/overview", headers=headers)
+        assert admin_denied.status_code == 403
 
         # Valid report creation -> 201 PENDING + generalized coords
         dhaka = svc.table("districts").select("id").eq("name_en", "Dhaka").single().execute().data

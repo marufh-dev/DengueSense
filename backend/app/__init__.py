@@ -10,6 +10,7 @@ from app.routes.districts import districts_bp
 from app.routes.health import health_bp
 from app.routes.moderation import moderation_bp
 from app.routes.reports import reports_bp
+from app.routes.admin import admin_bp
 
 
 def create_app() -> Flask:
@@ -30,7 +31,7 @@ def create_app() -> Flask:
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
-        if request.path.startswith(("/api/auth", "/api/alerts", "/api/moderation")):
+        if request.path.startswith(("/api/auth", "/api/alerts", "/api/moderation", "/api/admin")):
             response.headers["Cache-Control"] = "no-store"
         if Config.FLASK_ENV == "production":
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
@@ -43,6 +44,7 @@ def create_app() -> Flask:
     app.register_blueprint(moderation_bp)
     app.register_blueprint(alerts_bp)
     app.register_blueprint(data_health_bp)
+    app.register_blueprint(admin_bp)
 
     @app.errorhandler(404)
     def not_found(_err):
