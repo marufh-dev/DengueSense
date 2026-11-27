@@ -73,8 +73,8 @@ export default function AtmosphericParticles() {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < 110) {
-            const alpha = (1 - dist / 110) * 0.16;
-            ctx.strokeStyle = `rgba(14, 165, 233, ${alpha})`;
+            const alpha = (1 - dist / 110) * 0.12;
+            ctx.strokeStyle = `rgba(0, 0, 0, ${alpha})`;
             ctx.lineWidth = 0.75;
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
@@ -108,8 +108,8 @@ export default function AtmosphericParticles() {
           p.x -= (mdx / mdist) * force * 1.5;
           p.y -= (mdy / mdist) * force * 1.5;
 
-          // Connect to cursor with crisp ice blue line
-          ctx.strokeStyle = `rgba(2, 132, 199, ${(1 - mdist / mouse.radius) * 0.35})`;
+          // Connect to cursor with crisp technical black line
+          ctx.strokeStyle = `rgba(0, 0, 0, ${(1 - mdist / mouse.radius) * 0.28})`;
           ctx.lineWidth = 0.9;
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
@@ -117,11 +117,9 @@ export default function AtmosphericParticles() {
           ctx.stroke();
         }
 
-        // Draw node
-        ctx.fillStyle = `rgba(14, 165, 233, ${p.alpha})`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fill();
+        // Draw sharp geometric square micro-node (Bolt.new design)
+        ctx.fillStyle = `rgba(0, 0, 0, ${p.alpha * 0.5})`;
+        ctx.fillRect(p.x - p.radius, p.y - p.radius, p.radius * 2, p.radius * 2);
       }
 
       animationFrameId = requestAnimationFrame(render);

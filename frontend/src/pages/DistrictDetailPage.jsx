@@ -92,11 +92,11 @@ export default function DistrictDetailPage() {
             <ResponsiveContainer>
               <LineChart data={weather}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(14, 165, 233, 0.12)" />
-                <XAxis dataKey="recorded_date" tick={{ fontSize: 11, fill: "#475569" }} stroke="rgba(14, 165, 233, 0.2)" minTickGap={24} />
-                <YAxis tick={{ fontSize: 11, fill: "#475569" }} stroke="rgba(14, 165, 233, 0.2)" unit="°" />
-                <Tooltip contentStyle={{ background: "#ffffff", borderColor: "rgba(14, 165, 233, 0.3)", borderRadius: 8, color: "#0f172a", boxShadow: "0 4px 12px rgba(14, 165, 233, 0.1)" }} />
-                <Line type="monotone" dataKey="temp_mean" name="Mean °C" stroke="#0284c7" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="temp_max" name="Max °C" stroke="#0369a1" strokeWidth={1.5} dot={false} />
+                <XAxis dataKey="recorded_date" tick={{ fontSize: 11, fill: "#000000" }} stroke="#000000" minTickGap={24} />
+                <YAxis tick={{ fontSize: 11, fill: "#000000" }} stroke="#000000" unit="°" />
+                <Tooltip contentStyle={{ background: "#ffffff", borderColor: "#000000", borderRadius: 0, color: "#000000", boxShadow: "2px 2px 0px #000000", fontFamily: "monospace" }} />
+                <Line type="monotone" dataKey="temp_mean" name="Mean °C" stroke="#000000" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="temp_max" name="Max °C" stroke="#52525b" strokeWidth={1.5} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -107,11 +107,11 @@ export default function DistrictDetailPage() {
           <div style={{ width: "100%", height: 260 }}>
             <ResponsiveContainer>
               <BarChart data={weather}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(14, 165, 233, 0.12)" />
-                <XAxis dataKey="recorded_date" tick={{ fontSize: 11, fill: "#475569" }} stroke="rgba(14, 165, 233, 0.2)" minTickGap={24} />
-                <YAxis tick={{ fontSize: 11, fill: "#475569" }} stroke="rgba(14, 165, 233, 0.2)" unit="mm" />
-                <Tooltip contentStyle={{ background: "#ffffff", borderColor: "rgba(14, 165, 233, 0.3)", borderRadius: 8, color: "#0f172a", boxShadow: "0 4px 12px rgba(14, 165, 233, 0.1)" }} />
-                <Bar dataKey="rainfall_mm" name="Rainfall (mm)" fill="#0ea5e9" radius={[3, 3, 0, 0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+                <XAxis dataKey="recorded_date" tick={{ fontSize: 11, fill: "#000000" }} stroke="#000000" minTickGap={24} />
+                <YAxis tick={{ fontSize: 11, fill: "#000000" }} stroke="#000000" unit="mm" />
+                <Tooltip contentStyle={{ background: "#ffffff", borderColor: "#000000", borderRadius: 0, color: "#000000", boxShadow: "2px 2px 0px #000000", fontFamily: "monospace" }} />
+                <Bar dataKey="rainfall_mm" name="Rainfall (mm)" fill="#000000" radius={[0, 0, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -122,11 +122,11 @@ export default function DistrictDetailPage() {
           <div style={{ width: "100%", height: 260 }}>
             <ResponsiveContainer>
               <LineChart data={weather}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(14, 165, 233, 0.12)" />
-                <XAxis dataKey="recorded_date" tick={{ fontSize: 11, fill: "#475569" }} stroke="rgba(14, 165, 233, 0.2)" minTickGap={24} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "#475569" }} stroke="rgba(14, 165, 233, 0.2)" unit="%" />
-                <Tooltip contentStyle={{ background: "#ffffff", borderColor: "rgba(14, 165, 233, 0.3)", borderRadius: 8, color: "#0f172a", boxShadow: "0 4px 12px rgba(14, 165, 233, 0.1)" }} />
-                <Line type="monotone" dataKey="humidity_mean" name="Humidity %" stroke="#0284c7" strokeWidth={2} dot={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+                <XAxis dataKey="recorded_date" tick={{ fontSize: 11, fill: "#000000" }} stroke="#000000" minTickGap={24} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "#000000" }} stroke="#000000" unit="%" />
+                <Tooltip contentStyle={{ background: "#ffffff", borderColor: "#000000", borderRadius: 0, color: "#000000", boxShadow: "2px 2px 0px #000000", fontFamily: "monospace" }} />
+                <Line type="monotone" dataKey="humidity_mean" name="Humidity %" stroke="#000000" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -140,11 +140,11 @@ export default function DistrictDetailPage() {
             <div style={{ width: "100%", height: 260 }}>
               <ResponsiveContainer>
                 <LineChart data={aq}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(14, 165, 233, 0.12)" />
-                  <XAxis dataKey="recorded_date" tick={{ fontSize: 11, fill: "#475569" }} stroke="rgba(14, 165, 233, 0.2)" minTickGap={24} />
-                  <YAxis tick={{ fontSize: 11, fill: "#475569" }} stroke="rgba(14, 165, 233, 0.2)" />
-                  <Tooltip contentStyle={{ background: "#ffffff", borderColor: "rgba(14, 165, 233, 0.3)", borderRadius: 8, color: "#0f172a", boxShadow: "0 4px 12px rgba(14, 165, 233, 0.1)" }} />
-                  <Line type="monotone" dataKey="pm2_5" name="PM2.5" stroke="#475569" strokeWidth={2} dot={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+                  <XAxis dataKey="recorded_date" tick={{ fontSize: 11, fill: "#000000" }} stroke="#000000" minTickGap={24} />
+                  <YAxis tick={{ fontSize: 11, fill: "#000000" }} stroke="#000000" />
+                  <Tooltip contentStyle={{ background: "#ffffff", borderColor: "#000000", borderRadius: 0, color: "#000000", boxShadow: "2px 2px 0px #000000", fontFamily: "monospace" }} />
+                  <Line type="monotone" dataKey="pm2_5" name="PM2.5" stroke="#000000" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

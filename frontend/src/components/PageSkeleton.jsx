@@ -5,11 +5,11 @@ export default function PageSkeleton() {
       <div style={{ marginBottom: 24 }}>
         <div
           className="skeleton-shimmer"
-          style={{ width: "240px", height: "32px", borderRadius: "6px", marginBottom: "12px" }}
+          style={{ width: "240px", height: "32px", border: "1px solid #000000", marginBottom: "12px" }}
         />
         <div
           className="skeleton-shimmer"
-          style={{ width: "420px", height: "16px", borderRadius: "4px" }}
+          style={{ width: "420px", height: "16px", border: "1px solid #e4e4e7" }}
         />
       </div>
 
@@ -33,8 +33,8 @@ export default function PageSkeleton() {
               justifyContent: "space-between",
             }}
           >
-            <div className="skeleton-shimmer" style={{ width: "80px", height: "14px", borderRadius: "4px" }} />
-            <div className="skeleton-shimmer" style={{ width: "120px", height: "28px", borderRadius: "6px" }} />
+            <div className="skeleton-shimmer" style={{ width: "80px", height: "14px", border: "1px solid #e4e4e7" }} />
+            <div className="skeleton-shimmer" style={{ width: "120px", height: "28px", border: "1px solid #000000" }} />
           </div>
         ))}
       </div>
@@ -53,16 +53,15 @@ export default function PageSkeleton() {
       >
         <div
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: "50%",
-            border: "2px solid rgba(56, 189, 248, 0.2)",
-            borderTopColor: "var(--accent-primary)",
-            animation: "spin 0.8s linear infinite",
+            width: 28,
+            height: 28,
+            border: "2px solid #000000",
+            borderTopColor: "transparent",
+            animation: "spin 0.6s linear infinite",
           }}
         />
-        <span style={{ fontSize: 13, color: "var(--ink-secondary)", letterSpacing: "0.02em" }}>
-          Loading module…
+        <span style={{ fontSize: 12, color: "#000000", fontFamily: "monospace", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+          [INITIALIZING MODULE...]
         </span>
       </div>
     </div>

@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer } from "react-leaflet";
 import { useLanguage } from "../context/LanguageContext";
 
-// Strict 2-Color Palette (Ice Blue & Dark Grey) in Day Mode
+// Pure Black & White Monochromatic Palette in Day Mode (Bolt.new Aesthetic)
 const RISK_FILL = {
-  LOW: "#94a3b8",        // Soft Slate Dark Grey
-  MODERATE: "#38bdf8",   // Light Ice Blue
-  HIGH: "#0ea5e9",       // Vibrant Ice Blue
-  CRITICAL: "#0369a1",   // Deep Authoritative Ice Blue
-  "NO DATA": "#cbd5e1",  // Subtle Grey
+  LOW: "#e4e4e7",        // Light Zinc Grey
+  MODERATE: "#a1a1aa",   // Medium Zinc
+  HIGH: "#3f3f46",       // Dark Charcoal
+  CRITICAL: "#000000",   // Solid True Black
+  "NO DATA": "#ffffff",  // Pure White
 };
 
 export default function BangladeshMap({
@@ -52,9 +52,9 @@ export default function BangladeshMap({
 
     return {
       fillColor: RISK_FILL[level] || RISK_FILL["NO DATA"],
-      fillOpacity: level === "NO DATA" ? 0.35 : isSelected ? 0.85 : 0.62,
-      color: isSelected ? "#0f172a" : "#ffffff",
-      weight: isSelected ? 2.5 : 1,
+      fillOpacity: level === "NO DATA" ? 0.35 : isSelected ? 0.9 : 0.65,
+      color: isSelected ? "#000000" : "#27272a",
+      weight: isSelected ? 3 : 1.2,
       dashArray: level === "NO DATA" ? "4 3" : undefined,
     };
   };
