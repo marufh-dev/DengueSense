@@ -29,6 +29,7 @@ def list_reports():
     user = get_optional_user()
     district_id = request.args.get("district_id", "").strip()
     report_type = request.args.get("report_type", "").strip()
+    priority = request.args.get("priority", "").strip().upper()
     mine = request.args.get("mine", "").lower() == "true"
 
     try:
@@ -39,7 +40,7 @@ def list_reports():
 
     offset = (page - 1) * limit
     query = svc.table("crowd_reports").select(
-        "id, district_id, report_type, generalized_lat, generalized_lon, description, photo_path, status, expires_at, created_at, districts(name_en, division)",
+        "id, district_id, report_type, generalized_lat, generalized_lon, description, photo_path, status, is_rain_event, congestion_level, priority, expires_at, created_at, districts(name_en, division)",
         count="exact",
     )
 
@@ -52,6 +53,8 @@ def list_reports():
         query = query.eq("district_id", district_id)
     if report_type and report_type in VALID_REPORT_TYPES:
         query = query.eq("report_type", report_type)
+    if priority in {"STANDARD", "HIGH_WATERLOGGING_ALERT"}:
+        query = query.eq("priority", priority)
 
     res = query.order("created_at", desc=True).range(offset, offset + limit - 1).execute()
     rows = res.data or []
@@ -78,6 +81,9 @@ def list_reports():
             "description": r["description"],
             "has_photo": bool(r.get("photo_path")),
             "status": r["status"],
+            "is_rain_event": bool(r.get("is_rain_event", False)),
+            "congestion_level": r.get("congestion_level") or "NONE",
+            "priority": r.get("priority") or "STANDARD",
             "votes": vote_totals.get(r["id"], 0),
             "expires_at": r["expires_at"],
             "created_at": r["created_at"],
@@ -166,6 +172,39 @@ def create_report():
     gen_lon = round(lon, 2)
     expires_at = (datetime.now(timezone.utc) + timedelta(days=14)).isoformat()
 
+    congestion_level = str(data.get("congestion_level", "NONE")).strip().upper()
+    if congestion_level not in {"NONE", "MODERATE", "SEVERE_STANDSTILL"}:
+        congestion_level = "NONE"
+
+    # Multi-sensor correlation: Check user observation and recent meteorological rainfall
+    user_rain_obs = str(data.get("is_rain_event", "")).strip().lower() in ("true", "1", "yes")
+    meteorological_rain = False
+    try:
+        latest_weather = (
+            svc.table("daily_weather_metrics")
+            .select("rainfall_mm")
+            .eq("district_id", district_id)
+            .order("recorded_date", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if latest_weather.data and latest_weather.data[0].get("rainfall_mm") is not None:
+            meteorological_rain = float(latest_weather.data[0]["rainfall_mm"]) >= 5.0
+    except Exception:
+        pass
+
+    is_rain_event = user_rain_obs or meteorological_rain
+
+    # Evaluate waterlogging & standstill anomaly priority:
+    if (
+        congestion_level == "SEVERE_STANDSTILL"
+        or (congestion_level == "MODERATE" and is_rain_event)
+        or (report_type == "WATERLOGGING" and is_rain_event)
+    ):
+        priority = "HIGH_WATERLOGGING_ALERT"
+    else:
+        priority = "STANDARD"
+
     inserted = (
         svc.table("crowd_reports")
         .insert({
@@ -179,6 +218,9 @@ def create_report():
             "generalized_lon": gen_lon,
             "description": description,
             "photo_path": photo_path,
+            "is_rain_event": is_rain_event,
+            "congestion_level": congestion_level,
+            "priority": priority,
             "status": "PENDING",
             "expires_at": expires_at,
         })
@@ -193,6 +235,9 @@ def create_report():
             "report_type": inserted["report_type"],
             "latitude": inserted["generalized_lat"],
             "longitude": inserted["generalized_lon"],
+            "is_rain_event": inserted.get("is_rain_event", is_rain_event),
+            "congestion_level": inserted.get("congestion_level", congestion_level),
+            "priority": inserted.get("priority", priority),
             "status": inserted["status"],
             "expires_at": inserted["expires_at"],
             "created_at": inserted["created_at"],

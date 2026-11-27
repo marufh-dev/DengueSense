@@ -20,6 +20,8 @@ export default function SubmitReportPage() {
   const [districts, setDistricts] = useState([]);
   const [districtId, setDistrictId] = useState("");
   const [reportType, setReportType] = useState("WATERLOGGING");
+  const [congestionLevel, setCongestionLevel] = useState("NONE");
+  const [isRainEvent, setIsRainEvent] = useState(false);
   const [description, setDescription] = useState("");
   const [pin, setPin] = useState([23.8103, 90.4125]);
   const [photo, setPhoto] = useState(null);
@@ -61,6 +63,8 @@ export default function SubmitReportPage() {
       const formData = new FormData();
       formData.append("district_id", districtId);
       formData.append("report_type", reportType);
+      formData.append("congestion_level", congestionLevel);
+      formData.append("is_rain_event", isRainEvent ? "true" : "false");
       formData.append("description", description.trim());
       formData.append("latitude", String(pin[0]));
       formData.append("longitude", String(pin[1]));
@@ -131,6 +135,49 @@ export default function SubmitReportPage() {
               ))}
             </select>
           </div>
+
+          <div className="form-group">
+            <label htmlFor="rep-congestion">{t.submit.congestionLabel}</label>
+            <select
+              id="rep-congestion"
+              className="input-field"
+              value={congestionLevel}
+              onChange={(e) => setCongestionLevel(e.target.value)}
+            >
+              <option value="NONE">{t.submit.congestionNone}</option>
+              <option value="MODERATE">{t.submit.congestionModerate}</option>
+              <option value="SEVERE_STANDSTILL">{t.submit.congestionSevere}</option>
+            </select>
+            <small style={{ display: "block", color: "var(--ink-secondary)", fontSize: "0.82rem", marginTop: 4, lineHeight: 1.4 }}>
+              {t.submit.congestionHint}
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: "0.88rem" }}>
+              <input
+                type="checkbox"
+                checked={isRainEvent}
+                onChange={(e) => setIsRainEvent(e.target.checked)}
+              />
+              <span>🌧️ {t.submit.rainObservedLabel}</span>
+            </label>
+          </div>
+
+          {(congestionLevel === "SEVERE_STANDSTILL" || (congestionLevel === "MODERATE" && isRainEvent) || (reportType === "WATERLOGGING" && isRainEvent)) && (
+            <div style={{
+              background: "rgba(234, 88, 12, 0.1)",
+              border: "1px solid rgba(234, 88, 12, 0.3)",
+              borderRadius: 8,
+              padding: "10px 14px",
+              fontSize: "0.84rem",
+              color: "var(--color-critical, #c2410c)",
+              lineHeight: 1.4,
+              marginBottom: 8,
+            }}>
+              {t.submit.highPriorityElevationNotice}
+            </div>
+          )}
 
           <div className="form-group">
             <label htmlFor="rep-desc">{t.submit.description}</label>

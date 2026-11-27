@@ -128,6 +128,11 @@ export default function DashboardPage() {
                   <div>
                     <strong>{r.report_type.replaceAll("_", " ")}</strong> ·{" "}
                     <span>{r.district_name}</span>
+                    {r.priority === "HIGH_WATERLOGGING_ALERT" && (
+                      <span className="badge badge-high" style={{ marginLeft: 6, fontSize: "0.7rem", padding: "2px 6px", background: "rgba(220, 38, 38, 0.12)", color: "#dc2626", border: "1px solid rgba(220, 38, 38, 0.25)" }}>
+                        🚨 {lang === "bn" ? "জরুরি জলাবদ্ধতা" : "High Waterlogging"}
+                      </span>
+                    )}
                     <div className="meta-label">{r.description}</div>
                   </div>
                   <span className="mono meta-label">{r.created_at.slice(0, 10)}</span>

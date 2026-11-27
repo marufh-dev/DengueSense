@@ -18,6 +18,7 @@ export default function CommunityReportsPage() {
   const { t } = useLanguage();
   const [reports, setReports] = useState([]);
   const [filterType, setFilterType] = useState("ALL");
+  const [priorityFilter, setPriorityFilter] = useState("ALL");
   const [showMine, setShowMine] = useState(false);
   const [error, setError] = useState("");
   const [photoModalUrl, setPhotoModalUrl] = useState("");
@@ -25,6 +26,7 @@ export default function CommunityReportsPage() {
   const loadReports = () => {
     const params = new URLSearchParams({ limit: "30" });
     if (filterType !== "ALL") params.set("report_type", filterType);
+    if (priorityFilter !== "ALL") params.set("priority", priorityFilter);
     if (showMine && user) params.set("mine", "true");
     apiRequest(`/api/reports?${params.toString()}`, { token })
       .then((res) => setReports(res.reports || []))
@@ -33,7 +35,7 @@ export default function CommunityReportsPage() {
 
   useEffect(() => {
     loadReports();
-  }, [filterType, showMine, token]);
+  }, [filterType, priorityFilter, showMine, token]);
 
   const handleVote = async (reportId) => {
     setError("");
@@ -74,7 +76,7 @@ export default function CommunityReportsPage() {
         </Link>
       </div>
 
-      <div className="filter-row" style={{ marginBottom: 16, flexWrap: "wrap" }}>
+      <div className="filter-row" style={{ marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
         <select
           aria-label="Filter by category"
           className="input-field"
@@ -86,6 +88,17 @@ export default function CommunityReportsPage() {
               {type === "ALL" ? t.mapPage.allDivisions : t.submit.types[type] || type}
             </option>
           ))}
+        </select>
+
+        <select
+          aria-label="Filter by priority"
+          className="input-field"
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter(e.target.value)}
+        >
+          <option value="ALL">{t.reports.allPriorities}</option>
+          <option value="HIGH_WATERLOGGING_ALERT">{t.reports.highPriorityOnly}</option>
+          <option value="STANDARD">{t.reports.standardPriority}</option>
         </select>
 
         {user && (
@@ -118,6 +131,44 @@ export default function CommunityReportsPage() {
                 {r.district_name} ({r.division}) ·{" "}
                 <span className="mono">{r.created_at.slice(0, 10)}</span>
               </div>
+
+              {r.priority === "HIGH_WATERLOGGING_ALERT" && (
+                <div style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "rgba(220, 38, 38, 0.1)",
+                  color: "var(--color-critical, #dc2626)",
+                  border: "1px solid rgba(220, 38, 38, 0.28)",
+                  borderRadius: 6,
+                  padding: "4px 8px",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  marginTop: 6,
+                }}>
+                  <span>🚨 {t.reports.highAlertBadge}</span>
+                  <span style={{ fontSize: "0.72rem", opacity: 0.85, fontWeight: 400 }}>({t.reports.highAlertDesc})</span>
+                </div>
+              )}
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "6px 0" }}>
+                {r.is_rain_event && (
+                  <span className="badge" style={{ background: "rgba(2, 132, 199, 0.12)", color: "#0284c7", border: "1px solid rgba(2, 132, 199, 0.25)", fontSize: "0.75rem" }}>
+                    🌧️ {t.reports.rainEventBadge}
+                  </span>
+                )}
+                {r.congestion_level && r.congestion_level !== "NONE" && (
+                  <span className="badge" style={{
+                    background: r.congestion_level === "SEVERE_STANDSTILL" ? "rgba(220, 38, 38, 0.12)" : "rgba(217, 119, 6, 0.12)",
+                    color: r.congestion_level === "SEVERE_STANDSTILL" ? "#dc2626" : "#d97706",
+                    border: `1px solid ${r.congestion_level === "SEVERE_STANDSTILL" ? "rgba(220, 38, 38, 0.25)" : "rgba(217, 119, 6, 0.25)"}`,
+                    fontSize: "0.75rem"
+                  }}>
+                    🚗 {r.congestion_level === "SEVERE_STANDSTILL" ? t.reports.trafficStandstill : t.reports.trafficModerate}
+                  </span>
+                )}
+              </div>
+
               <p style={{ margin: "10px 0" }}>{r.description}</p>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div style={{ display: "flex", gap: 8 }}>

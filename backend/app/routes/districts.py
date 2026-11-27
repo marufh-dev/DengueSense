@@ -125,7 +125,7 @@ def get_district_detail(district_id: str):
     )
     reports_res = (
         svc.table("crowd_reports")
-        .select("id, report_type, generalized_lat, generalized_lon, description, status, created_at, expires_at")
+        .select("id, report_type, generalized_lat, generalized_lon, description, status, is_rain_event, congestion_level, priority, created_at, expires_at")
         .eq("district_id", district_id)
         .eq("status", "APPROVED")
         .order("created_at", desc=True)

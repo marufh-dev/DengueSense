@@ -33,6 +33,11 @@ export default function MethodologyPage() {
         </div>
       </div>
 
+      <div className="card" style={{ marginTop: 20 }}>
+        <h2 style={{ marginTop: 0 }}>{t.methodology.inundationTitle}</h2>
+        <p style={{ lineHeight: 1.6 }}>{t.methodology.inundationBody}</p>
+      </div>
+
       <div className="card" style={{ marginTop: 24 }}>
         <h2 style={{ marginTop: 0 }}>{t.methodology.sourcesTitle}</h2>
         <div className="table-wrap">

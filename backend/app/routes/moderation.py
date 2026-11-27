@@ -13,11 +13,14 @@ moderation_bp = Blueprint("moderation", __name__)
 def list_moderation_reports():
     svc = get_service_client()
     status_filter = request.args.get("status", "PENDING").strip().upper()
+    priority_filter = request.args.get("priority", "").strip().upper()
     query = svc.table("crowd_reports").select(
-        "id, user_id, district_id, report_type, latitude, longitude, description, photo_path, status, moderator_notes, expires_at, created_at, districts(name_en, division)"
+        "id, user_id, district_id, report_type, latitude, longitude, description, photo_path, status, is_rain_event, congestion_level, priority, moderator_notes, expires_at, created_at, districts(name_en, division)"
     )
     if status_filter in {"PENDING", "APPROVED", "REJECTED", "EXPIRED"}:
         query = query.eq("status", status_filter)
+    if priority_filter in {"STANDARD", "HIGH_WATERLOGGING_ALERT"}:
+        query = query.eq("priority", priority_filter)
     res = query.order("created_at", desc=True).limit(100).execute()
     return jsonify({"reports": res.data or []}), 200
 
