@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
 import { Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PageSkeleton from "./components/PageSkeleton";
 import AtmosphericParticles from "./components/AtmosphericParticles";
@@ -25,7 +26,15 @@ const ErrorPage = lazy(() => import("./pages/ErrorPage"));
 
 export default function App() {
   return (
-    <div style={{ position: "relative", minHeight: "100vh", background: "var(--bg-canvas)" }}>
+    <div
+      style={{
+        position: "relative",
+        minHeight: "100vh",
+        background: "var(--bg-canvas)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {/* Dynamic atmospheric particle field */}
       <AtmosphericParticles />
 
@@ -35,7 +44,7 @@ export default function App() {
 
       <Navbar />
 
-      <main style={{ position: "relative", zIndex: 1 }}>
+      <main style={{ position: "relative", zIndex: 1, flex: 1 }}>
         <Suspense fallback={<PageSkeleton />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
@@ -145,6 +154,8 @@ export default function App() {
           </Routes>
         </Suspense>
       </main>
+
+      <Footer />
     </div>
   );
 }

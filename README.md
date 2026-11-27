@@ -169,6 +169,6 @@ npm run dev
 ## Author & Academic Affiliation
 
 - **Developer:** Maruf Hossain ([@marufh-dev](https://github.com/marufh-dev))
-- **Email:** marufshakhawat653@gmail.com
+- **Email:** connect.marufhossain@gmail.com
 - **Academic Submission:** Computer Science & Software Engineering Project Showcase
 - **Live Deployment:** [https://denguesense-flax.vercel.app](https://denguesense-flax.vercel.app)
