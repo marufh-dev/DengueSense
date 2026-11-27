@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Activity, AlertTriangle, CheckCircle2, ChevronRight, Compass, MapPin, Shield, X } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { useLanguage } from "../context/LanguageContext";
-import BangladeshMap from "../components/BangladeshMap";
-import DistrictDrawer from "../components/DistrictDrawer";
 import RiskBadge from "../components/RiskBadge";
+
+// Lazy-load heavy map and district drawer modules
+const BangladeshMap = lazy(() => import("../components/BangladeshMap"));
+const DistrictDrawer = lazy(() => import("../components/DistrictDrawer"));
 
 export default function DashboardPage() {
   const { lang, t } = useLanguage();
@@ -456,17 +458,32 @@ export default function DashboardPage() {
 
       <section className="split-layout" style={{ marginTop: 24 }}>
         <div className="map-col">
-          <BangladeshMap
-            districts={districts}
-            reports={reports}
-            selectedDistrictId={selected?.id}
-            onSelectDistrict={handleSelectDistrict}
-            userLocation={userLocation}
-            height="540px"
-          />
+          <Suspense
+            fallback={
+              <div
+                className="card skeleton-shimmer"
+                style={{ height: "540px", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <span className="mono" style={{ fontSize: "12px", color: "var(--ink-secondary)" }}>
+                  LOADING INTERACTIVE RISK MAP...
+                </span>
+              </div>
+            }
+          >
+            <BangladeshMap
+              districts={districts}
+              reports={reports}
+              selectedDistrictId={selected?.id}
+              onSelectDistrict={handleSelectDistrict}
+              userLocation={userLocation}
+              height="540px"
+            />
+          </Suspense>
         </div>
         <div className="drawer-col">
-          <DistrictDrawer district={selected} detail={detail} loading={detailLoading} />
+          <Suspense fallback={<div className="card skeleton-shimmer" style={{ height: "400px" }} />}>
+            <DistrictDrawer district={selected} detail={detail} loading={detailLoading} />
+          </Suspense>
         </div>
       </section>
 

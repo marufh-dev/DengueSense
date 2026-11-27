@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { apiRequest } from "../api/client";
 import { useLanguage } from "../context/LanguageContext";
-import BangladeshMap from "../components/BangladeshMap";
-import DistrictDrawer from "../components/DistrictDrawer";
+
+// Lazy-load heavy map components
+const BangladeshMap = lazy(() => import("../components/BangladeshMap"));
+const DistrictDrawer = lazy(() => import("../components/DistrictDrawer"));
 
 export default function MapPage() {
   const { t } = useLanguage();
@@ -67,16 +69,31 @@ export default function MapPage() {
 
       <div className="split-layout">
         <div className="map-col">
-          <BangladeshMap
-            districts={filtered}
-            reports={reports}
-            selectedDistrictId={selected?.id}
-            onSelectDistrict={handleSelect}
-            height="620px"
-          />
+          <Suspense
+            fallback={
+              <div
+                className="card skeleton-shimmer"
+                style={{ height: "620px", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <span className="mono" style={{ fontSize: "12px", color: "var(--ink-secondary)" }}>
+                  LOADING NATIONAL RISK MAP...
+                </span>
+              </div>
+            }
+          >
+            <BangladeshMap
+              districts={filtered}
+              reports={reports}
+              selectedDistrictId={selected?.id}
+              onSelectDistrict={handleSelect}
+              height="620px"
+            />
+          </Suspense>
         </div>
         <div className="drawer-col">
-          <DistrictDrawer district={selected} detail={detail} loading={loading} />
+          <Suspense fallback={<div className="card skeleton-shimmer" style={{ height: "420px" }} />}>
+            <DistrictDrawer district={selected} detail={detail} loading={loading} />
+          </Suspense>
         </div>
       </div>
     </div>
