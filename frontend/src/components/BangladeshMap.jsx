@@ -12,12 +12,12 @@ function MapUpdater({ center, zoom }) {
   return null;
 }
 
-// Pure Black & White Monochromatic Palette in Day Mode (Bolt.new Aesthetic)
+// 2-Color Palette (#14080e & #49475b) in Day Mode (Bolt.new Aesthetic)
 const RISK_FILL = {
-  LOW: "#e4e4e7",        // Light Zinc Grey
-  MODERATE: "#a1a1aa",   // Medium Zinc
-  HIGH: "#3f3f46",       // Dark Charcoal
-  CRITICAL: "#000000",   // Solid True Black
+  LOW: "#dedde5",        // Soft Light Grey
+  MODERATE: "#716f85",   // Mid Slate
+  HIGH: "#49475b",       // Slate Charcoal Violet
+  CRITICAL: "#14080e",   // Deep Raisin Black
   "NO DATA": "#ffffff",  // Pure White
 };
 
@@ -146,7 +146,7 @@ export default function BangladeshMap({
             >
               <Popup>
                 <div style={{ fontFamily: "monospace", fontSize: 12 }}>
-                  <strong>📍 YOUR DEVICE LOCATION</strong>
+                  <strong>[DEVICE GPS LOCATION]</strong>
                   <div style={{ marginTop: 4 }}>
                     District: <strong>{userLocation.districtName}</strong>
                   </div>

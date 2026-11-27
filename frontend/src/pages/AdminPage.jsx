@@ -167,11 +167,15 @@ export default function AdminPage() {
       });
       const stats = res.stats || {};
       const sent = stats.sent ?? 0;
+      const live = stats.live_sent ?? 0;
       const reachedDistricts = (stats.districts || []).join(", ") || "targeted area";
       const recipients = stats.recipients_count ?? 0;
-      setSuccess(
-        `${t.admin.dispatchCustomSuccess}: ${sent} notifications dispatched to ${recipients} active subscribers across [${reachedDistricts}].`
-      );
+      let customMsg = `${t.admin.dispatchCustomSuccess}: ${sent} notifications dispatched`;
+      if (live > 0) {
+        customMsg += ` (${live} delivered live via Telegram & Email)`;
+      }
+      customMsg += ` to ${recipients} active subscribers across [${reachedDistricts}].`;
+      setSuccess(customMsg);
       loadData();
       fetchRecipientPreview(targetScope, targetDistrictId);
     } catch (err) {
@@ -215,8 +219,9 @@ export default function AdminPage() {
       const live = res.stats?.live_sent ?? 0;
       const simulated = res.stats?.simulated ?? 0;
       let msg = `${t.admin.dispatchSuccess} (${sent} notifications generated`;
-      if (live > 0 && simulated > 0) {
-        msg += ` · ${live} live, ${simulated} simulated`;
+      if (live > 0) {
+        msg += ` · ${live} delivered live via Telegram & Email`;
+        if (simulated > 0) msg += `, ${simulated} simulated`;
       } else if (simulated > 0) {
         msg += ` · recorded in user alert history; configure SMTP/Telegram for external delivery`;
       }

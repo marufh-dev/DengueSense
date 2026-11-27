@@ -1,52 +1,52 @@
 :root {
-  /* Surfaces & Borders (Day Mode: Pure White & Black Sharp Architecture) */
+  /* Surfaces & Borders (Day Mode: Pure White Canvas with #14080e & #49475b) */
   --bg-canvas: #ffffff;
   --bg-surface: #ffffff;
   --bg-surface-solid: #ffffff;
-  --bg-subtle: #fafafa;
-  --bg-muted: #f4f4f5;
-  --border-hairline: #e4e4e7;
-  --border-medium: #d4d4d8;
-  --border-strong: #000000;
+  --bg-subtle: #fafafb;
+  --bg-muted: #f3f3f5;
+  --border-hairline: #e3e2e8;
+  --border-medium: #49475b;
+  --border-strong: #14080e;
 
-  /* Ink & Typography (Pure Black & High-Legibility Greys) */
-  --ink-primary: #000000;
-  --ink-secondary: #3f3f46;
-  --ink-muted: #71717a;
+  /* Ink & Typography (Strict 2-Color: #14080e and #49475b) */
+  --ink-primary: #14080e;
+  --ink-secondary: #49475b;
+  --ink-muted: #49475b;
 
-  /* Brand & Interactive Accent (High-Contrast Pure Black & White) */
-  --accent-primary: #000000;
-  --accent-hover: #18181b;
-  --accent-soft: #f4f4f5;
-  --accent-glow: rgba(0, 0, 0, 0.08);
-  --focus-ring: #000000;
+  /* Brand & Interactive Accent (#14080e Primary, #49475b Hover/Secondary) */
+  --accent-primary: #14080e;
+  --accent-hover: #49475b;
+  --accent-soft: #f4f3f6;
+  --accent-glow: rgba(20, 8, 14, 0.08);
+  --focus-ring: #14080e;
 
-  /* Semantic Risk Scale (Monochromatic Pure Black/Grey/White Scale) */
-  --risk-low-text: #52525b;
-  --risk-low-bg: #fafafa;
-  --risk-low-border: #d4d4d8;
+  /* Semantic Scale (Strictly #14080e & #49475b Tone Scales) */
+  --risk-low-text: #49475b;
+  --risk-low-bg: #fafafb;
+  --risk-low-border: #dcdbe3;
 
-  --risk-moderate-text: #18181b;
-  --risk-moderate-bg: #e4e4e7;
-  --risk-moderate-border: #a1a1aa;
+  --risk-moderate-text: #14080e;
+  --risk-moderate-bg: #e8e7ed;
+  --risk-moderate-border: #49475b;
 
   --risk-high-text: #ffffff;
-  --risk-high-bg: #3f3f46;
-  --risk-high-border: #27272a;
+  --risk-high-bg: #49475b;
+  --risk-high-border: #14080e;
 
   --risk-critical-text: #ffffff;
-  --risk-critical-bg: #000000;
-  --risk-critical-border: #000000;
+  --risk-critical-bg: #14080e;
+  --risk-critical-border: #14080e;
 
-  --risk-nodata-text: #71717a;
+  --risk-nodata-text: #49475b;
   --risk-nodata-bg: #ffffff;
-  --risk-nodata-border: #e4e4e7;
+  --risk-nodata-border: #e3e2e8;
 
   /* Typography: Technical Monospace + Clean Sans */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Spacing & Radius: ZERO RADIUS (Strict Sharp Bolt.ai Corners) */
+  /* Spacing & Radius: Strictly Sharp Zero-Radius Corners */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -59,11 +59,11 @@
   --radius-lg: 0px;
   --radius-pill: 0px;
 
-  /* Shadows: Architectural Crisp Hairline & 2px Solid Offset */
+  /* Shadows: Architectural Crisp Hairline & 2px Solid Offset (#14080e) */
   --shadow-flat: none;
-  --shadow-float: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-card-hover: 2px 2px 0px #000000;
-  --shadow-solid-offset: 2px 2px 0px #000000;
+  --shadow-float: 0 1px 3px rgba(20, 8, 14, 0.06);
+  --shadow-card-hover: 2px 2px 0px #14080e;
+  --shadow-solid-offset: 2px 2px 0px #14080e;
   --glow-accent: none;
   --max-width: 1400px;
 }

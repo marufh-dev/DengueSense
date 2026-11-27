@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
-import { Award, CheckCircle2, Circle, Flame, Info, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
+import { Award, Calendar, CheckCircle2, Circle, Droplets, Flame, Home, Info, Lightbulb, RefreshCw, ShieldCheck, Sparkles, Trash2, Wind } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 
 const CHECKLIST_ITEMS = [
-  { id: "vases", icon: "🪴" },
-  { id: "trays", icon: "🧊" },
-  { id: "tanks", icon: "🚰" },
-  { id: "gutters", icon: "🏠" },
-  { id: "containers", icon: "🥥" },
-  { id: "tyres", icon: "🛞" },
-  { id: "buckets", icon: "🪣" },
-  { id: "screens", icon: "🪟" },
+  { id: "vases", icon: Sparkles },
+  { id: "trays", icon: Droplets },
+  { id: "tanks", icon: ShieldCheck },
+  { id: "gutters", icon: Home },
+  { id: "containers", icon: Trash2 },
+  { id: "tyres", icon: Circle },
+  { id: "buckets", icon: Droplets },
+  { id: "screens", icon: Wind },
 ];
 
 export default function PreventionPage() {
@@ -153,6 +153,7 @@ export default function PreventionPage() {
           {CHECKLIST_ITEMS.map((item) => {
             const isDone = !!checkedItems[item.id];
             const data = t.prevention.items[item.id];
+            const IconComponent = item.icon;
             return (
               <div
                 key={item.id}
@@ -169,7 +170,7 @@ export default function PreventionPage() {
                   transition: "all 0.15s ease",
                 }}
               >
-                <div style={{ fontSize: "1.5rem", marginTop: 2 }}>{item.icon}</div>
+                <div style={{ marginTop: 2, color: "var(--ink-secondary)" }}><IconComponent size={20} /></div>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <strong style={{ fontSize: "0.95rem", textDecoration: isDone ? "line-through" : "none", color: isDone ? "var(--ink-secondary)" : "var(--ink-primary)" }}>
@@ -237,16 +238,22 @@ export default function PreventionPage() {
               border: "1px solid rgba(2, 132, 199, 0.25)",
               fontSize: "0.82rem",
               lineHeight: 1.45,
-              color: "#38bdf8"
+              color: "#38bdf8",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 8
             }}>
-              💡 <strong>{t.prevention.tipTitle}:</strong> {t.prevention.tipText}
+              <Lightbulb size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <strong>{t.prevention.tipTitle}:</strong> {t.prevention.tipText}
+              </div>
             </div>
           </div>
 
           {/* Routine Reminder */}
           <div className="card">
-            <h3 style={{ margin: "0 0 8px", fontSize: "0.95rem" }}>
-              🗓️ {t.prevention.pickDryDayTitle}
+            <h3 style={{ margin: "0 0 8px", fontSize: "0.95rem", display: "flex", alignItems: "center", gap: 6 }}>
+              <Calendar size={15} /> {t.prevention.pickDryDayTitle}
             </h3>
             <p style={{ margin: 0, fontSize: "0.84rem", color: "var(--ink-secondary)", lineHeight: 1.5 }}>
               {t.prevention.pickDryDayText}

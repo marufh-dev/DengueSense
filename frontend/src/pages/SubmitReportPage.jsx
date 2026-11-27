@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
-import { Compass, Upload } from "lucide-react";
+import { CloudRain, Compass, Upload } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -160,7 +160,9 @@ export default function SubmitReportPage() {
                 checked={isRainEvent}
                 onChange={(e) => setIsRainEvent(e.target.checked)}
               />
-              <span>🌧️ {t.submit.rainObservedLabel}</span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <CloudRain size={15} /> {t.submit.rainObservedLabel}
+              </span>
             </label>
           </div>
 

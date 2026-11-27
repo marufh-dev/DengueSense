@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Activity, AlertTriangle, CheckCircle2, ChevronRight, MapPin, X } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, ChevronRight, Compass, MapPin, Shield, X } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { useLanguage } from "../context/LanguageContext";
 import BangladeshMap from "../components/BangladeshMap";
@@ -160,7 +160,7 @@ export default function DashboardPage() {
               {locating
                 ? t.dashboard.locating.toUpperCase()
                 : userLocation
-                ? `📍 ${userLocation.districtName.toUpperCase()}`
+                ? userLocation.districtName.toUpperCase()
                 : t.dashboard.detectLocation.toUpperCase()}
             </span>
           </button>
@@ -275,8 +275,8 @@ export default function DashboardPage() {
               style={{
                 width: 34,
                 height: 34,
-                border: "1px solid #000000",
-                background: "#000000",
+                border: "1px solid #14080e",
+                background: "#14080e",
                 color: "#ffffff",
                 display: "grid",
                 placeItems: "center",
@@ -284,7 +284,7 @@ export default function DashboardPage() {
                 fontSize: "1rem",
               }}
             >
-              🧭
+              <Compass size={18} />
             </div>
             <div>
               <strong style={{ fontSize: "0.92rem", color: "#000000", textTransform: "uppercase", fontFamily: "var(--font-mono)" }}>
@@ -378,8 +378,9 @@ export default function DashboardPage() {
                     <strong>{r.report_type.replaceAll("_", " ")}</strong> ·{" "}
                     <span>{r.district_name}</span>
                     {r.priority === "HIGH_WATERLOGGING_ALERT" && (
-                      <span className="badge badge-high" style={{ marginLeft: 6, fontSize: "0.7rem", padding: "2px 6px", background: "rgba(220, 38, 38, 0.12)", color: "#dc2626", border: "1px solid rgba(220, 38, 38, 0.25)" }}>
-                        🚨 {lang === "bn" ? "জরুরি জলাবদ্ধতা" : "High Waterlogging"}
+                      <span className="badge badge-high" style={{ marginLeft: 6, fontSize: "0.7rem", padding: "2px 6px", background: "#14080e", color: "#ffffff", border: "1px solid #14080e" }}>
+                        <AlertTriangle size={11} style={{ marginRight: 3, verticalAlign: "middle" }} />
+                        {lang === "bn" ? "জরুরি জলাবদ্ধতা" : "High Waterlogging"}
                       </span>
                     )}
                     <div className="meta-label">{r.description}</div>
@@ -441,11 +442,11 @@ export default function DashboardPage() {
             </div>
 
             <div style={{ textAlign: "center", margin: "20px 0 16px" }}>
-              <div style={{ fontSize: "3rem", marginBottom: 10 }}>
-                {tourStep === 0 && "🗺️"}
-                {tourStep === 1 && "🚨"}
-                {tourStep === 2 && "🩺"}
-                {tourStep === 3 && "🛡️"}
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 14, color: "#14080e" }}>
+                {tourStep === 0 && <MapPin size={42} />}
+                {tourStep === 1 && <AlertTriangle size={42} />}
+                {tourStep === 2 && <Activity size={42} />}
+                {tourStep === 3 && <Shield size={42} />}
               </div>
               <h2 style={{ fontSize: "1.25rem", margin: "0 0 8px" }}>
                 {tourStep === 0 && t.tour.step1Title}

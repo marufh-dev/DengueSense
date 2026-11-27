@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertCircle, AlertTriangle, CheckCircle2, ChevronRight, HelpCircle, PhoneCall, ShieldAlert, Stethoscope } from "lucide-react";
+import { Activity, AlertCircle, AlertOctagon, AlertTriangle, Ban, CheckCircle2, ChevronRight, HelpCircle, Phone, PhoneCall, ShieldAlert, Stethoscope } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function TriagePage() {
@@ -149,9 +149,15 @@ export default function TriagePage() {
                 background: "rgba(234, 88, 12, 0.12)",
                 border: "1px solid rgba(234, 88, 12, 0.3)",
                 fontSize: "0.82rem",
-                color: "var(--risk-high-text, #ea580c)"
+                color: "var(--risk-high-text, #ea580c)",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 6
               }}>
-                <strong>⚠️ {t.triage.criticalPhaseNote}:</strong> {t.triage.criticalPhaseDesc}
+                <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <strong>{t.triage.criticalPhaseNote}:</strong> {t.triage.criticalPhaseDesc}
+                </div>
               </div>
             )}
           </div>
@@ -176,8 +182,8 @@ export default function TriagePage() {
           {/* Step 3: Warning signs */}
           <div style={{ marginTop: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <h3 style={{ margin: 0, fontSize: "0.95rem", color: "var(--risk-high-text, #ea580c)" }}>
-                ⚠️ {t.triage.warningsSection}
+              <h3 style={{ margin: 0, fontSize: "0.95rem", color: "var(--risk-high-text, #ea580c)", display: "flex", alignItems: "center", gap: 6 }}>
+                <AlertTriangle size={15} /> {t.triage.warningsSection}
               </h3>
               <span className="badge badge-high" style={{ fontSize: "0.72rem" }}>Hospital Observation</span>
             </div>
@@ -198,8 +204,8 @@ export default function TriagePage() {
           {/* Step 4: Severe signs */}
           <div style={{ marginTop: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <h3 style={{ margin: 0, fontSize: "0.95rem", color: "var(--color-critical, #dc2626)" }}>
-                🚨 {t.triage.severeSection}
+              <h3 style={{ margin: 0, fontSize: "0.95rem", color: "var(--color-critical, #dc2626)", display: "flex", alignItems: "center", gap: 6 }}>
+                <AlertOctagon size={15} /> {t.triage.severeSection}
               </h3>
               <span className="badge badge-critical" style={{ fontSize: "0.72rem" }}>Emergency Resuscitation</span>
             </div>
@@ -271,10 +277,16 @@ export default function TriagePage() {
               background: "rgba(0,0,0,0.25)",
               border: "1px solid rgba(255,255,255,0.15)",
               fontSize: "0.8rem",
-              lineHeight: 1.45
+              lineHeight: 1.45,
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 6
             }}>
-              <strong style={{ color: "var(--color-critical, #dc2626)" }}>🚫 {t.triage.nsaidWarningTitle}:</strong>{" "}
-              {t.triage.nsaidWarningText}
+              <Ban size={15} style={{ color: "var(--color-critical, #dc2626)", flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <strong style={{ color: "var(--color-critical, #dc2626)" }}>{t.triage.nsaidWarningTitle}:</strong>{" "}
+                {t.triage.nsaidWarningText}
+              </div>
             </div>
           </div>
 
@@ -285,20 +297,20 @@ export default function TriagePage() {
               {t.triage.emergencyHotlinesTitle}
             </h3>
             <div style={{ display: "grid", gap: 8, fontSize: "0.85rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--border-subtle)" }}>
-                <span>🚑 {t.triage.nationalEmergency}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--border-subtle)" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><PhoneCall size={13} /> {t.triage.nationalEmergency}</span>
                 <strong className="mono" style={{ color: "var(--accent-primary)" }}>999</strong>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--border-subtle)" }}>
-                <span>🏥 {t.triage.shasthyaBatayan}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--border-subtle)" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Activity size={13} /> {t.triage.shasthyaBatayan}</span>
                 <strong className="mono" style={{ color: "var(--accent-primary)" }}>16263</strong>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--border-subtle)" }}>
-                <span>🔬 {t.triage.iedcrHotline}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--border-subtle)" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Stethoscope size={13} /> {t.triage.iedcrHotline}</span>
                 <strong className="mono" style={{ color: "var(--accent-primary)" }}>10655</strong>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
-                <span>📞 {t.triage.dghsHotline}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Phone size={13} /> {t.triage.dghsHotline}</span>
                 <strong className="mono" style={{ color: "var(--accent-primary)" }}>01759-114488</strong>
               </div>
             </div>

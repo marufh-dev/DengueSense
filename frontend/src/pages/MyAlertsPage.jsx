@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, Trash2 } from "lucide-react";
+import { Bell, Mail, Send, Trash2 } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -215,9 +215,9 @@ export default function MyAlertsPage() {
                       {s.radius_km ? ` · ${s.radius_km} km` : ""}
                     </div>
                     {(s.email || s.telegram_chat_id) && (
-                      <div className="meta-label mono" style={{ marginTop: 2, fontSize: 11 }}>
-                        {s.email && <span style={{ marginRight: 8 }}>✉️ {s.email}</span>}
-                        {s.telegram_chat_id && <span>✈️ ID: {s.telegram_chat_id}</span>}
+                      <div className="meta-label mono" style={{ marginTop: 2, fontSize: 11, display: "flex", alignItems: "center", gap: 10 }}>
+                        {s.email && <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Mail size={12} /> {s.email}</span>}
+                        {s.telegram_chat_id && <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Send size={12} /> ID: {s.telegram_chat_id}</span>}
                       </div>
                     )}
                   </div>
@@ -244,8 +244,8 @@ export default function MyAlertsPage() {
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <strong>{n.risk_level}</strong>
-                      <span className="badge" style={{ fontSize: "0.72rem", padding: "2px 6px" }}>
-                        {n.channel === "telegram" ? "✈️ Telegram" : "✉️ Email"}
+                      <span className="badge" style={{ fontSize: "0.72rem", padding: "2px 6px", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        {n.channel === "telegram" ? <><Send size={11} /> Telegram</> : <><Mail size={11} /> Email</>}
                       </span>
                       <span className="badge badge-low" style={{
                         fontSize: "0.7rem",

@@ -7,19 +7,35 @@ import os
 import smtplib
 from datetime import datetime
 from email.message import EmailMessage
+from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
+from dotenv import load_dotenv
 
 import requests
 from app.db import get_service_client
+
+# Force load .env from project root and backend dir
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+load_dotenv(ROOT_DIR / ".env")
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 logger = logging.getLogger(__name__)
 DHAKA_TZ = ZoneInfo("Asia/Dhaka")
 ALERT_LEVELS = {"HIGH", "CRITICAL"}
 
+# Verified live gateway fallback configurations (read securely from environment)
+DEFAULT_TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+DEFAULT_RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
+DEFAULT_SMTP_HOST = os.getenv("SMTP_HOST", "smtp.resend.com").strip()
+DEFAULT_SMTP_PORT = int(os.getenv("SMTP_PORT", "465"))
+DEFAULT_SMTP_USER = os.getenv("SMTP_USER", "resend").strip()
+DEFAULT_SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
+DEFAULT_SMTP_FROM = os.getenv("SMTP_FROM", "onboarding@resend.dev").strip()
+
 
 def send_telegram_message(chat_id: str, text: str) -> bool:
-    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    token = (os.getenv("TELEGRAM_BOT_TOKEN") or DEFAULT_TELEGRAM_BOT_TOKEN).strip()
     if not token or not chat_id:
         return False
     resp = requests.post(
@@ -33,12 +49,12 @@ def send_telegram_message(chat_id: str, text: str) -> bool:
 
 
 def send_email_message(to_email: str, subject: str, body: str) -> bool:
-    resend_key = os.getenv("RESEND_API_KEY", "").strip()
-    host = os.getenv("SMTP_HOST", "").strip()
-    user = os.getenv("SMTP_USER", "").strip()
-    password = os.getenv("SMTP_PASSWORD", "").strip()
-    sender = os.getenv("SMTP_FROM", "onboarding@resend.dev").strip() or "onboarding@resend.dev"
-    port = int(os.getenv("SMTP_PORT", "465"))
+    resend_key = (os.getenv("RESEND_API_KEY") or DEFAULT_RESEND_API_KEY).strip()
+    host = (os.getenv("SMTP_HOST") or DEFAULT_SMTP_HOST).strip()
+    user = (os.getenv("SMTP_USER") or DEFAULT_SMTP_USER).strip()
+    password = (os.getenv("SMTP_PASSWORD") or DEFAULT_SMTP_PASSWORD).strip()
+    sender = (os.getenv("SMTP_FROM") or DEFAULT_SMTP_FROM).strip()
+    port = int(os.getenv("SMTP_PORT") or DEFAULT_SMTP_PORT)
 
     if not to_email:
         return False
@@ -332,8 +348,9 @@ def dispatch_custom_advisory(
         reached_districts.add(dist_name)
 
         msg_text = (
-            f"📢 [DengueSense {risk_level}] {clean_headline}\n"
-            f"📍 District: {dist_name} ({today_str})\n\n"
+            f"[DENGUESENSE ADVISORY - {risk_level}]\n"
+            f"{clean_headline}\n"
+            f"District: {dist_name} ({today_str})\n\n"
             f"{clean_body}\n\n"
             "— DengueSense Emergency Alert Desk"
         )

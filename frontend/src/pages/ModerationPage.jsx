@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, X } from "lucide-react";
+import { AlertTriangle, Car, Check, CloudRain, X } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -102,7 +102,7 @@ export default function ModerationPage() {
                   margin: "8px 0",
                 }}>
                   <strong style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                    🚨 {t.moderation.highAlertBadge}
+                    <AlertTriangle size={14} /> {t.moderation.highAlertBadge}
                   </strong>
                   <span style={{ fontSize: "0.76rem", opacity: 0.9, lineHeight: 1.35 }}>
                     {t.moderation.priorityElevatedNote}
@@ -112,8 +112,8 @@ export default function ModerationPage() {
 
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "6px 0" }}>
                 {r.is_rain_event && (
-                  <span className="badge" style={{ background: "rgba(2, 132, 199, 0.12)", color: "#0284c7", border: "1px solid rgba(2, 132, 199, 0.25)", fontSize: "0.75rem" }}>
-                    🌧️ {t.moderation.rainEventTag}
+                  <span className="badge" style={{ background: "rgba(2, 132, 199, 0.12)", color: "#0284c7", border: "1px solid rgba(2, 132, 199, 0.25)", fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <CloudRain size={12} /> {t.moderation.rainEventTag}
                   </span>
                 )}
                 {r.congestion_level && r.congestion_level !== "NONE" && (
@@ -121,9 +121,12 @@ export default function ModerationPage() {
                     background: r.congestion_level === "SEVERE_STANDSTILL" ? "rgba(220, 38, 38, 0.12)" : "rgba(217, 119, 6, 0.12)",
                     color: r.congestion_level === "SEVERE_STANDSTILL" ? "#dc2626" : "#d97706",
                     border: `1px solid ${r.congestion_level === "SEVERE_STANDSTILL" ? "rgba(220, 38, 38, 0.25)" : "rgba(217, 119, 6, 0.25)"}`,
-                    fontSize: "0.75rem"
+                    fontSize: "0.75rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4
                   }}>
-                    🚗 {r.congestion_level === "SEVERE_STANDSTILL" ? t.reports.trafficStandstill : t.reports.trafficModerate}
+                    <Car size={12} /> {r.congestion_level === "SEVERE_STANDSTILL" ? t.reports.trafficStandstill : t.reports.trafficModerate}
                   </span>
                 )}
               </div>

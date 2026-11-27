@@ -74,7 +74,7 @@ export default function AtmosphericParticles() {
 
           if (dist < 110) {
             const alpha = (1 - dist / 110) * 0.12;
-            ctx.strokeStyle = `rgba(0, 0, 0, ${alpha})`;
+            ctx.strokeStyle = `rgba(73, 71, 91, ${alpha})`;
             ctx.lineWidth = 0.75;
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
@@ -108,8 +108,8 @@ export default function AtmosphericParticles() {
           p.x -= (mdx / mdist) * force * 1.5;
           p.y -= (mdy / mdist) * force * 1.5;
 
-          // Connect to cursor with crisp technical black line
-          ctx.strokeStyle = `rgba(0, 0, 0, ${(1 - mdist / mouse.radius) * 0.28})`;
+          // Connect to cursor with crisp technical line
+          ctx.strokeStyle = `rgba(20, 8, 14, ${(1 - mdist / mouse.radius) * 0.28})`;
           ctx.lineWidth = 0.9;
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
@@ -117,8 +117,8 @@ export default function AtmosphericParticles() {
           ctx.stroke();
         }
 
-        // Draw sharp geometric square micro-node (Bolt.new design)
-        ctx.fillStyle = `rgba(0, 0, 0, ${p.alpha * 0.5})`;
+        // Draw sharp geometric square micro-node (#14080e)
+        ctx.fillStyle = `rgba(20, 8, 14, ${p.alpha * 0.5})`;
         ctx.fillRect(p.x - p.radius, p.y - p.radius, p.radius * 2, p.radius * 2);
       }
 
