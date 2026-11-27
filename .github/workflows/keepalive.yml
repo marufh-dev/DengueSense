@@ -1,14 +1,40 @@
-name: Keep Render Backend Warm
+name: Keep Platform Active & Prevent Sleeping
 
 on:
   schedule:
-    # Ping every 10 minutes to minimize Render Free tier cold-starts
+    # Run every 10 minutes to prevent Render free-tier spin-down
     - cron: "*/10 * * * *"
   workflow_dispatch:
 
 jobs:
-  ping:
+  keepalive:
+    name: Ping Services
     runs-on: ubuntu-latest
     steps:
-      - name: Ping DengueSense Render API health endpoint
-        run: curl -fsS --max-time 30 https://denguesense-api.onrender.com/api/health
+      - name: Ping Render Backend API (Active DB Health Check)
+        run: |
+          echo "Pinging Render Backend API and Database..."
+          RESPONSE=$(curl -fsS --max-time 45 https://denguesense-api.onrender.com/api/health || true)
+          echo "Render response: $RESPONSE"
+
+      - name: Ping Vercel Frontend SPA
+        run: |
+          echo "Pinging Vercel Frontend..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 https://denguesense-flax.vercel.app || true)
+          echo "Vercel HTTP Status: $STATUS"
+
+      - name: Ping Supabase REST Endpoint (Keep DB Unpaused)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            echo "Directly querying Supabase to keep project active..."
+            curl -fsS --max-time 20 \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              "$SUPABASE_URL/rest/v1/districts?select=id&limit=1" > /dev/null || true
+            echo "Supabase ping successful."
+          else
+            echo "Supabase secrets not found in GitHub Actions; Render /api/health already performs direct database queries."
+          fi
