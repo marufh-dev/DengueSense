@@ -25,7 +25,8 @@ test-results/
 .vscode/
 .idea/
 
-# Supabase local temp
+# Supabase config, migrations, and local files
+supabase/
 supabase/.temp/
 
 # Local audit & private guides
