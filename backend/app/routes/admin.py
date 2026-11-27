@@ -22,7 +22,7 @@ def get_admin_overview():
     total_users = users_res.count or len(users_res.data or [])
 
     # Total reports
-    reports_res = svc.table("community_reports").select("id, status", count="exact").execute()
+    reports_res = svc.table("crowd_reports").select("id, status", count="exact").execute()
     total_reports = reports_res.count or len(reports_res.data or [])
     pending_reports = sum(1 for r in (reports_res.data or []) if r.get("status") == "PENDING")
 
