@@ -4,6 +4,11 @@ import { Activity, AlertTriangle, CheckCircle2, ChevronRight, Compass, MapPin, S
 import { apiRequest } from "../api/client";
 import { useLanguage } from "../context/LanguageContext";
 import RiskBadge from "../components/RiskBadge";
+import {
+  requestDeviceGps,
+  matchDistrictByCoordinates,
+  fetchSubdistrictName,
+} from "../lib/geoUtils";
 
 // Lazy-load heavy map and district drawer modules
 const BangladeshMap = lazy(() => import("../components/BangladeshMap"));
@@ -24,15 +29,19 @@ export default function DashboardPage() {
     return localStorage.getItem("denguesense_tour_dismissed") === "true";
   });
 
-  // Device Geolocation State
+  // Cached GeoJSON boundaries for point-in-polygon matching
+  const [geojson, setGeojson] = useState(null);
+
+  // Device Geolocation State (Discards old inaccurate IP or fallback caches)
   const [userLocation, setUserLocation] = useState(() => {
     try {
       const saved = localStorage.getItem("denguesense_user_location");
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Only accept if strictly inside Bangladesh bounds
+        // Only accept validated GPS or manual user selections inside Bangladesh
         if (
           parsed &&
+          (parsed.source === "gps" || parsed.source === "manual") &&
           parsed.lat >= 20.5 &&
           parsed.lat <= 26.8 &&
           parsed.lon >= 88.0 &&
@@ -48,130 +57,119 @@ export default function DashboardPage() {
     }
   });
   const [locating, setLocating] = useState(false);
-  const [locationStatus, setLocationStatus] = useState("idle"); // 'idle' | 'detecting' | 'detected' | 'denied' | 'unsupported'
+  const [locationStatus, setLocationStatus] = useState("idle"); // 'idle' | 'detecting' | 'detected' | 'denied' | 'timeout' | 'out_of_bounds'
 
-  const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
+  // Preload district boundary polygons for instant boundary testing
+  useEffect(() => {
+    fetch("/data/bangladesh_districts.geojson")
+      .then((r) => r.json())
+      .then((data) => setGeojson(data))
+      .catch(() => {});
+  }, []);
 
-  const findClosestDistrict = (userLat, userLon, list) => {
-    let closest = null;
-    let minDistance = Infinity;
-    for (const d of list) {
-      if (d.centroid_lat && d.centroid_lon) {
-        const dist = calculateDistanceKm(userLat, userLon, d.centroid_lat, d.centroid_lon);
-        if (dist < minDistance) {
-          minDistance = dist;
-          closest = d;
-        }
-      }
-    }
-    return { district: closest, distanceKm: minDistance };
-  };
-
-  const detectDeviceLocation = (districtsList = []) => {
+  const detectDeviceLocation = async (districtsList = []) => {
     const list = districtsList.length > 0 ? districtsList : (riskData?.districts || []);
     if (!list.length) return;
 
     setLocating(true);
     setLocationStatus("detecting");
 
-    const applyDistrict = (lat, lon, src = "gps") => {
-      const { district, distanceKm } = findClosestDistrict(lat, lon, list);
-      if (district) {
-        const locObj = {
-          lat,
-          lon,
-          districtName: district.name_en,
-          districtId: district.id,
-          distanceKm,
-          source: src,
-        };
-        setUserLocation(locObj);
-        setLocationStatus("detected");
+    try {
+      // 1. Ensure GeoJSON is loaded for boundary matching
+      let gj = geojson;
+      if (!gj) {
         try {
-          localStorage.setItem("denguesense_user_location", JSON.stringify(locObj));
-        } catch {}
-        handleSelectDistrict(district);
-        return true;
+          const r = await fetch("/data/bangladesh_districts.geojson");
+          gj = await r.json();
+          setGeojson(gj);
+        } catch (e) {
+          console.warn("Could not load district geojson boundaries:", e);
+        }
       }
-      return false;
-    };
 
-    // IP Geolocation: queries ipwho.is (reliable Bangladesh ISP resolution)
-    const tryIpFallback = () => {
-      fetch("https://ipwho.is/")
-        .then((r) => r.json())
-        .then((d) => {
-          if (
-            d &&
-            d.success &&
-            d.latitude >= 20.5 &&
-            d.latitude <= 26.8 &&
-            d.longitude >= 88.0 &&
-            d.longitude <= 92.8
-          ) {
-            applyDistrict(d.latitude, d.longitude, "ip");
-          } else {
-            fallbackDefault();
-          }
-        })
-        .catch(() => fallbackDefault())
-        .finally(() => setLocating(false));
-    };
+      // 2. Query High-Accuracy Hardware GPS (15s timeout, 0 maximumAge to prevent stale cell tower fixes)
+      const coords = await requestDeviceGps({ timeout: 15000 });
+      const { latitude, longitude, accuracy } = coords;
 
-    const fallbackDefault = () => {
-      setLocationStatus("fallback");
-      setLocating(false);
-      // Prefer cached location if inside Bangladesh
+      // 3. Verify within Bangladesh territory (lat 20.5 - 26.8, lon 88.0 - 92.8)
+      if (
+        latitude < 20.5 ||
+        latitude > 26.8 ||
+        longitude < 88.0 ||
+        longitude > 92.8
+      ) {
+        setLocationStatus("out_of_bounds");
+        if (!userLocation) {
+          const defaultDist = list.find((d) => d.name_en === "Dhaka") || list[0];
+          if (defaultDist) handleSelectDistrict(defaultDist);
+        }
+        return;
+      }
+
+      // 4. Mathematical Point-in-Polygon administrative boundary match
+      const matchResult = matchDistrictByCoordinates(latitude, longitude, gj, list);
+      if (!matchResult || !matchResult.district) {
+        throw new Error("Unable to map GPS coordinates to a Bangladesh district.");
+      }
+
+      const matchedDistrict = matchResult.district;
+
+      const locObj = {
+        lat: latitude,
+        lon: longitude,
+        districtName: matchedDistrict.name_en,
+        districtId: matchedDistrict.id,
+        subdistrict: null,
+        accuracy: Math.round(accuracy),
+        source: "gps",
+        matchedBy: matchResult.method, // 'polygon_exact' | 'proximity'
+      };
+
+      setUserLocation(locObj);
+      setLocationStatus("detected");
+      try {
+        localStorage.setItem("denguesense_user_location", JSON.stringify(locObj));
+      } catch {}
+
+      handleSelectDistrict(matchedDistrict);
+
+      // 5. Asynchronously enhance with local neighbourhood/subdistrict name from OSM Nominatim
+      fetchSubdistrictName(latitude, longitude).then((subName) => {
+        if (subName) {
+          setUserLocation((prev) => {
+            if (!prev || prev.districtId !== matchedDistrict.id) return prev;
+            const updated = { ...prev, subdistrict: subName };
+            try {
+              localStorage.setItem("denguesense_user_location", JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
+        }
+      });
+    } catch (err) {
+      console.info("Hardware GPS position unavailable or denied:", err?.message || err);
+      if (err?.code === 1) {
+        setLocationStatus("denied");
+      } else if (err?.code === 3) {
+        setLocationStatus("timeout");
+      } else {
+        setLocationStatus("unavailable");
+      }
+
+      // If user already has a saved manual or GPS location, keep it
       if (userLocation && userLocation.districtId) {
         const match = list.find((d) => d.id === userLocation.districtId);
-        if (match) {
-          handleSelectDistrict(match);
-          return;
+        if (match) handleSelectDistrict(match);
+      } else {
+        // Default to national capital (Dhaka) without inventing a fake IP location
+        const dhaka = list.find((d) => d.name_en === "Dhaka") || list[0];
+        if (dhaka) {
+          handleSelectDistrict(dhaka);
         }
       }
-      const pirojpur = list.find((d) => d.name_en === "Pirojpur");
-      const defaultDist = pirojpur || list.find((d) => d.name_en === "Dhaka") || list[0];
-      if (defaultDist) {
-        applyDistrict(defaultDist.centroid_lat, defaultDist.centroid_lon, "fallback");
-      }
-    };
-
-    if (!navigator.geolocation) {
-      tryIpFallback();
-      return;
+    } finally {
+      setLocating(false);
     }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        // Strictly verify if position is within Bangladesh geographic territory (lat 20.5 - 26.8, lon 88.0 - 92.8)
-        if (latitude >= 20.5 && latitude <= 26.8 && longitude >= 88.0 && longitude <= 92.8) {
-          const applied = applyDistrict(latitude, longitude, "gps");
-          if (!applied) tryIpFallback();
-        } else {
-          // Hardware/VPN returned non-Bangladesh coordinates (e.g. Miami/US proxy) -> use IP geocoding
-          tryIpFallback();
-        }
-        setLocating(false);
-      },
-      (err) => {
-        console.info("Browser GPS unavailable or denied:", err.message);
-        tryIpFallback();
-      },
-      { timeout: 6000, maximumAge: 0, enableHighAccuracy: true }
-    );
   };
 
   const handleManualLocationChange = (distId) => {
@@ -183,8 +181,10 @@ export default function DashboardPage() {
       lon: matched.centroid_lon,
       districtName: matched.name_en,
       districtId: matched.id,
-      distanceKm: 0,
+      subdistrict: null,
+      accuracy: null,
       source: "manual",
+      matchedBy: "manual_selection",
     };
     setUserLocation(locObj);
     setLocationStatus("detected");
@@ -211,7 +211,14 @@ export default function DashboardPage() {
         setReports(rep.reports || []);
 
         const list = rk.districts || [];
-        // Immediately trigger device location resolution
+        // If user already has a valid saved location, select it; otherwise detect via GPS
+        if (userLocation && userLocation.districtId) {
+          const match = list.find((d) => d.id === userLocation.districtId);
+          if (match) {
+            handleSelectDistrict(match);
+            return;
+          }
+        }
         detectDeviceLocation(list);
       })
       .catch((err) => setError(err.message));
@@ -272,8 +279,8 @@ export default function DashboardPage() {
 
       {error && <div className="alert-banner alert-error">{error}</div>}
 
-      {/* GPS Location Status Box */}
-      {userLocation && (
+      {/* High-Precision GPS / District Location Status Box */}
+      {userLocation ? (
         <div
           style={{
             border: "1px solid #14080e",
@@ -296,20 +303,25 @@ export default function DashboardPage() {
                 display: "inline-block",
                 width: 8,
                 height: 8,
-                background: "#14080e",
+                background: userLocation.source === "gps" ? "#14080e" : "#49475b",
                 boxShadow: "0 0 0 2px #ffffff, 0 0 0 3px #14080e",
               }}
             />
             <div>
               <strong>
-                [{userLocation.source === "manual" ? "LOCATION SET" : "LOCATION DETECTED"}]: {userLocation.districtName.toUpperCase()}
+                [{userLocation.source === "gps" ? "PRECISE GPS LOCKED" : "DISTRICT SELECTED"}]:{" "}
+                {userLocation.districtName.toUpperCase()}
+                {userLocation.subdistrict ? ` (${userLocation.subdistrict})` : ""}
               </strong>
               <span style={{ color: "var(--ink-secondary)", marginLeft: 8 }}>
-                ({userLocation.lat.toFixed(4)}° N, {userLocation.lon.toFixed(4)}° E) · Auto-selected local telemetry & risk data
+                {userLocation.source === "gps"
+                  ? `(${userLocation.lat.toFixed(4)}° N, ${userLocation.lon.toFixed(4)}° E · Accuracy ±${userLocation.accuracy || 10}m · Boundary Verified)`
+                  : `(Centroid: ${userLocation.lat.toFixed(4)}° N, ${userLocation.lon.toFixed(4)}° E · Manual Telemetry Active)`}
               </span>
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ fontSize: "11px", color: "var(--ink-secondary)" }}>Switch:</span>
             <select
               value={userLocation.districtId || ""}
               onChange={(e) => handleManualLocationChange(e.target.value)}
@@ -328,8 +340,61 @@ export default function DashboardPage() {
               disabled={locating}
               className="btn btn-secondary"
               style={{ height: 26, padding: "0 8px", fontSize: "10.5px" }}
+              title="Acquire live GPS lock"
             >
-              {locating ? "LOCATING..." : t.dashboard.refreshGps.toUpperCase()}
+              <MapPin size={11} style={{ marginRight: 4 }} />
+              {locating ? "ACQUIRING GPS..." : "DETECT PRECISE GPS"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          style={{
+            border: "1px solid #14080e",
+            background: "#ffffff",
+            boxShadow: "2px 2px 0px #14080e",
+            padding: "10px 14px",
+            marginBottom: 20,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 10,
+            fontFamily: "var(--font-mono)",
+            fontSize: "12px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Compass size={16} />
+            <div>
+              <strong>[LOCATION NOT DETECTED]:</strong>{" "}
+              <span>Enable device GPS for pinpoint local district telemetry, or choose your district:</span>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <select
+              defaultValue=""
+              onChange={(e) => {
+                if (e.target.value) handleManualLocationChange(e.target.value);
+              }}
+              className="input-field"
+              style={{ height: 26, padding: "0 6px", fontSize: "11px", width: "auto" }}
+            >
+              <option value="" disabled>Select your District...</option>
+              {districts.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {lang === "bn" ? d.name_bn || d.name_en : d.name_en} ({d.division})
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => detectDeviceLocation()}
+              disabled={locating}
+              className="btn btn-secondary"
+              style={{ height: 26, padding: "0 8px", fontSize: "10.5px" }}
+            >
+              <MapPin size={11} style={{ marginRight: 4 }} />
+              {locating ? "ACQUIRING GPS..." : "DETECT PRECISE GPS"}
             </button>
           </div>
         </div>
@@ -338,7 +403,7 @@ export default function DashboardPage() {
       {locationStatus === "denied" && (
         <div
           style={{
-            border: "1px solid #000000",
+            border: "1px solid #14080e",
             background: "#fafafa",
             padding: "8px 12px",
             marginBottom: 16,
@@ -350,14 +415,59 @@ export default function DashboardPage() {
             fontSize: "11px",
           }}
         >
-          <span>[GPS LOCATION ACCESS DISABLED IN BROWSER] Showing default district. Enable browser location permission to auto-detect your district.</span>
+          <span>[GPS PERMISSION DISABLED IN BROWSER] Browser location access was denied. You can select your district from the dropdown above anytime.</span>
           <button
             onClick={() => detectDeviceLocation()}
             className="btn btn-secondary"
             style={{ height: 24, padding: "0 8px", fontSize: "10px" }}
           >
-            TRY AGAIN
+            TRY GPS AGAIN
           </button>
+        </div>
+      )}
+
+      {locationStatus === "timeout" && (
+        <div
+          style={{
+            border: "1px solid #14080e",
+            background: "#fafafa",
+            padding: "8px 12px",
+            marginBottom: 16,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+            fontFamily: "var(--font-mono)",
+            fontSize: "11px",
+          }}
+        >
+          <span>[GPS ACQUISITION TIMEOUT] Hardware GPS took longer than expected to resolve satellites. Click below to retry or select your district directly.</span>
+          <button
+            onClick={() => detectDeviceLocation()}
+            className="btn btn-secondary"
+            style={{ height: 24, padding: "0 8px", fontSize: "10px" }}
+          >
+            RETRY GPS
+          </button>
+        </div>
+      )}
+
+      {locationStatus === "out_of_bounds" && (
+        <div
+          style={{
+            border: "1px solid #14080e",
+            background: "#fafafa",
+            padding: "8px 12px",
+            marginBottom: 16,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+            fontFamily: "var(--font-mono)",
+            fontSize: "11px",
+          }}
+        >
+          <span>[OUTSIDE BANGLADESH TERRITORY] Your GPS coordinates are outside Bangladesh. Please choose your target district from the dropdown above.</span>
         </div>
       )}
 

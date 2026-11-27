@@ -4,6 +4,7 @@ import { CloudRain, Compass, Upload } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { requestDeviceGps, matchDistrictByCoordinates } from "../lib/geoUtils";
 
 function PinPicker({ position, onChange }) {
   useMapEvents({
@@ -19,6 +20,7 @@ export default function SubmitReportPage() {
   const { lang, t } = useLanguage();
   const [districts, setDistricts] = useState([]);
   const [districtId, setDistrictId] = useState("");
+  const [geojson, setGeojson] = useState(null);
   const [reportType, setReportType] = useState("WATERLOGGING");
   const [congestionLevel, setCongestionLevel] = useState("NONE");
   const [isRainEvent, setIsRainEvent] = useState(false);
@@ -28,6 +30,7 @@ export default function SubmitReportPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   useEffect(() => {
     apiRequest("/api/districts")
@@ -41,17 +44,47 @@ export default function SubmitReportPage() {
         }
       })
       .catch(() => {});
+
+    fetch("/data/bangladesh_districts.geojson")
+      .then((r) => r.json())
+      .then((data) => setGeojson(data))
+      .catch(() => {});
   }, []);
 
-  const handleUseLocation = () => {
-    if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser.");
-      return;
+  const handlePinChange = (newCoords) => {
+    setPin(newCoords);
+    if (districts.length > 0) {
+      const match = matchDistrictByCoordinates(newCoords[0], newCoords[1], geojson, districts);
+      if (match?.district) {
+        setDistrictId(match.district.id);
+      }
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setPin([pos.coords.latitude, pos.coords.longitude]),
-      () => setError("Unable to retrieve your location. Please click the map to place a pin.")
-    );
+  };
+
+  const handleUseLocation = async () => {
+    setError("");
+    setLocating(true);
+    try {
+      const pos = await requestDeviceGps({ timeout: 15000 });
+      const newPin = [pos.latitude, pos.longitude];
+      setPin(newPin);
+
+      // Auto-detect and select the exact district
+      if (districts.length > 0) {
+        const match = matchDistrictByCoordinates(pos.latitude, pos.longitude, geojson, districts);
+        if (match?.district) {
+          setDistrictId(match.district.id);
+        }
+      }
+    } catch (err) {
+      setError(
+        err?.code === 1
+          ? "Location permission denied in browser. Please click the map to place your pin."
+          : "Unable to acquire high-accuracy GPS fix. Please click the map to place your pin."
+      );
+    } finally {
+      setLocating(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -224,8 +257,13 @@ export default function SubmitReportPage() {
         <div className="card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
             <strong>{t.submit.mapTitle}</strong>
-            <button type="button" className="btn btn-secondary" onClick={handleUseLocation}>
-              <Compass size={14} /> {t.submit.useLocation}
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleUseLocation}
+              disabled={locating}
+            >
+              <Compass size={14} /> {locating ? "LOCATING..." : t.submit.useLocation}
             </button>
           </div>
           <div className="map-wrapper" style={{ height: 380 }}>
@@ -234,7 +272,7 @@ export default function SubmitReportPage() {
                 attribution="&copy; OpenStreetMap contributors"
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              <PinPicker position={pin} onChange={setPin} />
+              <PinPicker position={pin} onChange={handlePinChange} />
             </MapContainer>
           </div>
         </div>
