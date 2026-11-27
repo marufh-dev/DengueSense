@@ -3,6 +3,7 @@
 from flask import Blueprint, g, jsonify, request
 from app.auth import require_auth
 from app.db import get_service_client
+from app.notifications import send_email_message
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -132,4 +133,120 @@ def update_profile():
             "notification_channels": channels,
         }
     }), 200
+
+
+@auth_bp.route("/api/auth/register", methods=["POST"])
+def register():
+    """Register a new user directly in Supabase with auto-confirmation and welcome email."""
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "")).strip().lower()
+    password = str(data.get("password", "")).strip()
+    display_name = str(data.get("display_name", "")).strip() or "Citizen"
+
+    if not email or "@" not in email:
+        return jsonify({"error": "A valid email address is required"}), 400
+    if len(password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters"}), 400
+
+    svc = get_service_client()
+
+    try:
+        # Create user directly via Supabase Service Role with email pre-confirmed
+        res = svc.auth.admin.create_user({
+            "email": email,
+            "password": password,
+            "email_confirm": True,
+            "user_metadata": {
+                "display_name": display_name,
+                "avatar_id": "avatar-shield",
+            }
+        })
+        user_obj = getattr(res, "user", res)
+        uid = getattr(user_obj, "id", None) or (res.get("id") if isinstance(res, dict) else None)
+
+        # Upsert profile in user_profiles table
+        if uid:
+            svc.table("user_profiles").upsert({
+                "id": uid,
+                "display_name": display_name,
+                "role": "citizen",
+                "avatar_id": "avatar-shield",
+            }, on_conflict="id").execute()
+
+        # Send welcome email via our live Resend / SMTP gateway
+        try:
+            welcome_subject = "Welcome to DengueSense — Bangladesh Early Warning Platform"
+            welcome_body = (
+                f"Hello {display_name},\n\n"
+                "Your DengueSense citizen account has been successfully created and verified!\n\n"
+                "You can now:\n"
+                "• Monitor daily meteorological dengue suitability (EDSI) across all 64 districts\n"
+                "• Submit local waterlogging & mosquito breeding reports\n"
+                "• Subscribe to district alert broadcasts via Email and Telegram\n\n"
+                "Access the live platform anytime: https://denguesense-flax.vercel.app\n\n"
+                "— National Dengue Telemetry Directorate"
+            )
+            send_email_message(email, welcome_subject, welcome_body)
+        except Exception:
+            pass
+
+        return jsonify({
+            "status": "success",
+            "message": "Account created successfully! You can sign in immediately.",
+            "user": {
+                "id": str(uid) if uid else None,
+                "email": email,
+                "display_name": display_name,
+            }
+        }), 201
+    except Exception as exc:
+        err_msg = str(exc)
+        if "registered" in err_msg.lower() or "unique constraint" in err_msg.lower() or "already exists" in err_msg.lower():
+            return jsonify({"error": "An account with this email already exists. Please sign in."}), 409
+        return jsonify({"error": f"Registration error: {err_msg}"}), 400
+
+
+@auth_bp.route("/api/auth/magic-link", methods=["POST"])
+def send_magic_link():
+    """Generate and dispatch a direct one-time magic sign-in link via Resend."""
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "")).strip().lower()
+
+    if not email or "@" not in email:
+        return jsonify({"error": "A valid email address is required"}), 400
+
+    svc = get_service_client()
+
+    try:
+        res = svc.auth.admin.generate_link({
+            "type": "magiclink",
+            "email": email,
+        })
+        props = getattr(res, "properties", None)
+        action_link = getattr(props, "action_link", None) if props else None
+
+        if not action_link:
+            return jsonify({"error": "Failed to generate sign-in link"}), 500
+
+        subject = "Your DengueSense One-Time Sign-In Link"
+        body = (
+            "Hello,\n\n"
+            "Click the secure link below to sign in directly to your DengueSense account:\n\n"
+            f"{action_link}\n\n"
+            "This link will expire shortly. If you did not request this link, you can safely ignore this email.\n\n"
+            "— DengueSense Security Team"
+        )
+        sent = send_email_message(email, subject, body)
+        if not sent:
+            return jsonify({"error": "Failed to deliver email through mail gateway. Please use password login."}), 502
+
+        return jsonify({
+            "status": "success",
+            "message": "Check your email inbox or spam folder — we sent you a secure sign-in link via Resend."
+        }), 200
+    except Exception as exc:
+        err_msg = str(exc)
+        if "user not found" in err_msg.lower():
+            return jsonify({"error": "No account found with this email. Please register first."}), 404
+        return jsonify({"error": f"Magic link error: {err_msg}"}), 400
 

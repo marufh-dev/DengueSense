@@ -173,3 +173,43 @@ def test_authenticated_citizen_reporting_and_rbac():
         assert "Telegram Chat ID is required" in tg_res.get_json()["error"]
     finally:
         svc.auth.admin.delete_user(uid)
+
+
+def test_auth_registration_and_magic_link():
+    app = create_app()
+    client = app.test_client()
+    svc = get_service_client()
+
+    bad_res = client.post("/api/auth/register", json={"email": "invalid", "password": "pass"})
+    assert bad_res.status_code == 400
+
+    test_email = f"pytest_reg_{uuid.uuid4().hex[:6]}@example.com"
+    reg_res = client.post(
+        "/api/auth/register",
+        json={
+            "email": test_email,
+            "password": "ValidPassword123!",
+            "display_name": "Pytest Citizen",
+        },
+    )
+    assert reg_res.status_code == 201
+    reg_data = reg_res.get_json()
+    assert reg_data["status"] == "success"
+    user_id = reg_data["user"]["id"]
+
+    try:
+        dup_res = client.post(
+            "/api/auth/register",
+            json={
+                "email": test_email,
+                "password": "ValidPassword123!",
+                "display_name": "Duplicate Citizen",
+            },
+        )
+        assert dup_res.status_code == 409
+
+        ml_res = client.post("/api/auth/magic-link", json={"email": test_email})
+        assert ml_res.status_code in (200, 502)
+    finally:
+        if user_id:
+            svc.auth.admin.delete_user(user_id)

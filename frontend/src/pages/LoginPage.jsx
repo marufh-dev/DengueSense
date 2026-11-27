@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Activity, Eye, EyeOff, Mail } from "lucide-react";
+import { apiRequest } from "../api/client";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -27,16 +28,30 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       if (magicMode) {
-        const { error: otpErr } = await supabase.auth.signInWithOtp({
-          email: email.trim(),
-          options: { emailRedirectTo: window.location.origin },
-        });
-        if (otpErr) throw otpErr;
-        setInfo(
-          lang === "bn"
-            ? "আপনার ইমেইলে একটি সাইন-ইন লিংক পাঠানো হয়েছে।"
-            : "Check your inbox — we sent you a one-time sign-in link."
-        );
+        try {
+          const res = await apiRequest("/api/auth/magic-link", {
+            method: "POST",
+            body: { email: email.trim() },
+          });
+          setInfo(
+            res.message ||
+              (lang === "bn"
+                ? "আপনার ইমেইলে একটি সুরক্ষিত সাইন-ইন লিংক পাঠানো হয়েছে (স্প্যাম ফোল্ডারও চেক করুন)।"
+                : "We sent a secure sign-in link to your email. Check your inbox and spam folder.")
+          );
+        } catch (mErr) {
+          // Fallback to client SDK if backend route drops
+          const { error: otpErr } = await supabase.auth.signInWithOtp({
+            email: email.trim(),
+            options: { emailRedirectTo: window.location.origin },
+          });
+          if (otpErr) throw otpErr;
+          setInfo(
+            lang === "bn"
+              ? "আপনার ইমেইলে একটি সাইন-ইন লিংক পাঠানো হয়েছে。"
+              : "Check your inbox — we sent you a one-time sign-in link."
+          );
+        }
       } else {
         const { error: authErr } = await signIn(email.trim(), password);
         if (authErr) throw authErr;

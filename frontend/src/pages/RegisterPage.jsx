@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Activity, Eye, EyeOff } from "lucide-react";
+import { apiRequest } from "../api/client";
+import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function RegisterPage() {
   const { signUp } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,9 +24,42 @@ export default function RegisterPage() {
     setSuccess("");
     setSubmitting(true);
     try {
-      const { error: authErr } = await signUp(email.trim(), password, displayName.trim());
-      if (authErr) throw authErr;
-      setSuccess(t.auth.regSuccess);
+      let registered = false;
+      // 1. Try robust backend registration (auto-confirms + sends welcome email via Resend)
+      try {
+        const res = await apiRequest("/api/auth/register", {
+          method: "POST",
+          body: {
+            email: email.trim(),
+            password,
+            display_name: displayName.trim(),
+          },
+        });
+        if (res && res.status === "success") {
+          registered = true;
+        }
+      } catch (backendErr) {
+        if (backendErr.message && backendErr.message.toLowerCase().includes("already exists")) {
+          throw backendErr;
+        }
+        // Fallback to client SDK if backend route is unavailable
+        const { error: authErr } = await signUp(email.trim(), password, displayName.trim());
+        if (authErr) throw authErr;
+        registered = true;
+      }
+
+      if (registered) {
+        // Automatically authenticate user so they enter dashboard without confirmation block
+        const { error: loginErr } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (!loginErr) {
+          navigate("/", { replace: true });
+          return;
+        }
+        setSuccess(t.auth.regSuccess);
+      }
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
