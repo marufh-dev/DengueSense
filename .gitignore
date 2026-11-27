@@ -27,3 +27,7 @@ test-results/
 
 # Supabase local temp
 supabase/.temp/
+
+# Local audit & private guides
+DENGUESENSE_PLATFORM_AUDIT_AND_METRICS_GUIDE.txt
+
