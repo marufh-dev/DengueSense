@@ -22,6 +22,86 @@ export default function DashboardPage() {
     return localStorage.getItem("denguesense_tour_dismissed") === "true";
   });
 
+  // Device Geolocation State
+  const [userLocation, setUserLocation] = useState(null);
+  const [locating, setLocating] = useState(false);
+  const [locationStatus, setLocationStatus] = useState("idle"); // 'idle' | 'detecting' | 'detected' | 'denied' | 'unsupported'
+
+  const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  const findClosestDistrict = (userLat, userLon, list) => {
+    let closest = null;
+    let minDistance = Infinity;
+    for (const d of list) {
+      if (d.centroid_lat && d.centroid_lon) {
+        const dist = calculateDistanceKm(userLat, userLon, d.centroid_lat, d.centroid_lon);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closest = d;
+        }
+      }
+    }
+    return { district: closest, distanceKm: minDistance };
+  };
+
+  const detectDeviceLocation = (districtsList = []) => {
+    const list = districtsList.length > 0 ? districtsList : (riskData?.districts || []);
+    if (!navigator.geolocation) {
+      setLocationStatus("unsupported");
+      const dhaka = list.find((d) => d.name_en === "Dhaka");
+      if (dhaka && !selected) handleSelectDistrict(dhaka);
+      return;
+    }
+
+    setLocating(true);
+    setLocationStatus("detecting");
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const { district, distanceKm } = findClosestDistrict(latitude, longitude, list);
+
+        if (district) {
+          const locObj = {
+            lat: latitude,
+            lon: longitude,
+            districtName: district.name_en,
+            districtId: district.id,
+            distanceKm,
+          };
+          setUserLocation(locObj);
+          setLocationStatus("detected");
+          handleSelectDistrict(district);
+        } else {
+          setLocationStatus("fallback");
+          const dhaka = list.find((d) => d.name_en === "Dhaka");
+          if (dhaka && !selected) handleSelectDistrict(dhaka);
+        }
+        setLocating(false);
+      },
+      (err) => {
+        console.info("Geolocation denied or unavailable:", err.message);
+        setLocationStatus("denied");
+        setLocating(false);
+        const dhaka = list.find((d) => d.name_en === "Dhaka");
+        if (dhaka && !selected) handleSelectDistrict(dhaka);
+      },
+      { timeout: 10000, maximumAge: 120000, enableHighAccuracy: true }
+    );
+  };
+
   const handleDismissTour = () => {
     setDismissTour(true);
     localStorage.setItem("denguesense_tour_dismissed", "true");
@@ -37,10 +117,10 @@ export default function DashboardPage() {
         setRiskData(rk);
         setDataHealth(dh);
         setReports(rep.reports || []);
-        const dhaka = (rk.districts || []).find((d) => d.name_en === "Dhaka");
-        if (dhaka) {
-          handleSelectDistrict(dhaka);
-        }
+
+        const list = rk.districts || [];
+        // Immediately trigger device location resolution
+        detectDeviceLocation(list);
       })
       .catch((err) => setError(err.message));
   }, []);
@@ -66,48 +146,148 @@ export default function DashboardPage() {
           <h1>{t.dashboard.title}</h1>
           <p className="subtitle">{t.dashboard.subtitle}</p>
         </div>
-        {latestLog && (
-          <div className="freshness-pill">
-            <CheckCircle2 size={14} color="var(--accent-primary)" />
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => detectDeviceLocation()}
+            disabled={locating}
+            className="btn btn-secondary"
+            style={{ height: 32, padding: "0 10px", fontSize: "11px" }}
+            title={t.dashboard.detectLocation}
+          >
+            <MapPin size={13} />
             <span>
-              {t.dashboard.lastIngest}:{" "}
-              <span className="mono tabular-nums">
-                {(latestLog.completed_at || latestLog.started_at || "").slice(0, 16).replace("T", " ")}
-              </span>
+              {locating
+                ? t.dashboard.locating.toUpperCase()
+                : userLocation
+                ? `📍 ${userLocation.districtName.toUpperCase()}`
+                : t.dashboard.detectLocation.toUpperCase()}
             </span>
-          </div>
-        )}
+          </button>
+          {latestLog && (
+            <div className="freshness-pill">
+              <CheckCircle2 size={14} color="#000000" />
+              <span>
+                {t.dashboard.lastIngest}:{" "}
+                <span className="mono tabular-nums">
+                  {(latestLog.completed_at || latestLog.started_at || "").slice(0, 16).replace("T", " ")}
+                </span>
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {error && <div className="alert-banner alert-error">{error}</div>}
 
+      {/* GPS Location Status Box */}
+      {userLocation && (
+        <div
+          style={{
+            border: "1px solid #000000",
+            background: "#ffffff",
+            boxShadow: "2px 2px 0px #000000",
+            padding: "10px 14px",
+            marginBottom: 20,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 10,
+            fontFamily: "var(--font-mono)",
+            fontSize: "12px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
+              style={{
+                display: "inline-block",
+                width: 8,
+                height: 8,
+                background: "#000000",
+                boxShadow: "0 0 0 2px #ffffff, 0 0 0 3px #000000",
+              }}
+            />
+            <div>
+              <strong>[DEVICE GPS DETECTED]: {userLocation.districtName.toUpperCase()}</strong>
+              <span style={{ color: "var(--ink-secondary)", marginLeft: 8 }}>
+                ({userLocation.lat.toFixed(4)}° N, {userLocation.lon.toFixed(4)}° E) · Auto-selected local telemetry & risk data
+              </span>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              onClick={() => detectDeviceLocation()}
+              disabled={locating}
+              className="btn btn-secondary"
+              style={{ height: 26, padding: "0 8px", fontSize: "10.5px" }}
+            >
+              {locating ? "LOCATING..." : t.dashboard.refreshGps.toUpperCase()}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {locationStatus === "denied" && (
+        <div
+          style={{
+            border: "1px solid #000000",
+            background: "#fafafa",
+            padding: "8px 12px",
+            marginBottom: 16,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+            fontFamily: "var(--font-mono)",
+            fontSize: "11px",
+          }}
+        >
+          <span>[GPS LOCATION ACCESS DISABLED IN BROWSER] Showing default district. Enable browser location permission to auto-detect your district.</span>
+          <button
+            onClick={() => detectDeviceLocation()}
+            className="btn btn-secondary"
+            style={{ height: 24, padding: "0 8px", fontSize: "10px" }}
+          >
+            TRY AGAIN
+          </button>
+        </div>
+      )}
+
       {!dismissTour && (
-        <div style={{
-          marginTop: 16,
-          padding: "12px 18px",
-          borderRadius: "var(--radius, 12px)",
-          background: "linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(15, 23, 42, 0.6))",
-          border: "1px solid rgba(2, 132, 199, 0.25)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 12
-        }}>
+        <div
+          style={{
+            marginTop: 16,
+            marginBottom: 20,
+            padding: "12px 18px",
+            background: "#ffffff",
+            border: "1px solid #000000",
+            boxShadow: "2px 2px 0px #000000",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              background: "rgba(2, 132, 199, 0.2)",
-              display: "grid",
-              placeItems: "center",
-              fontSize: "1.1rem"
-            }}>
+            <div
+              style={{
+                width: 34,
+                height: 34,
+                border: "1px solid #000000",
+                background: "#000000",
+                color: "#ffffff",
+                display: "grid",
+                placeItems: "center",
+                fontFamily: "var(--font-mono)",
+                fontSize: "1rem",
+              }}
+            >
               🧭
             </div>
             <div>
-              <strong style={{ fontSize: "0.92rem", color: "var(--ink-primary)" }}>
+              <strong style={{ fontSize: "0.92rem", color: "#000000", textTransform: "uppercase", fontFamily: "var(--font-mono)" }}>
                 {t.tour.bannerTitle}
               </strong>
               <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "var(--ink-secondary)" }}>
@@ -147,22 +327,22 @@ export default function DashboardPage() {
           <div className="kpi-sub tabular-nums">{withData} {t.dashboard.withData}</div>
         </div>
         <div className="card kpi-card">
-          <div className="kpi-label"><AlertTriangle size={14} color="var(--risk-high-text)" /> {t.dashboard.highSuitability}</div>
-          <div className="kpi-value tabular-nums" style={{ color: "var(--risk-high-text)" }}>
+          <div className="kpi-label"><AlertTriangle size={14} /> {t.dashboard.highSuitability}</div>
+          <div className="kpi-value tabular-nums">
             {summary.HIGH ?? "—"}
           </div>
           <div className="kpi-sub">EDSI 55.0 – 74.9</div>
         </div>
         <div className="card kpi-card">
-          <div className="kpi-label"><AlertTriangle size={14} color="var(--risk-critical-text)" /> {t.dashboard.criticalSuitability}</div>
-          <div className="kpi-value tabular-nums" style={{ color: "var(--risk-critical-text)" }}>
+          <div className="kpi-label"><AlertTriangle size={14} /> {t.dashboard.criticalSuitability}</div>
+          <div className="kpi-value tabular-nums">
             {summary.CRITICAL ?? "—"}
           </div>
           <div className="kpi-sub">EDSI 75.0 – 100</div>
         </div>
         <div className="card kpi-card">
-          <div className="kpi-label"><Activity size={14} color="var(--accent-primary)" /> {t.dashboard.activeReportsCount}</div>
-          <div className="kpi-value tabular-nums" style={{ color: "var(--accent-primary)" }}>
+          <div className="kpi-label"><Activity size={14} /> {t.dashboard.activeReportsCount}</div>
+          <div className="kpi-value tabular-nums">
             {reports.length}
           </div>
           <div className="kpi-sub">{t.dashboard.activeReportsSub}</div>
@@ -176,6 +356,7 @@ export default function DashboardPage() {
             reports={reports}
             selectedDistrictId={selected?.id}
             onSelectDistrict={handleSelectDistrict}
+            userLocation={userLocation}
             height="540px"
           />
         </div>

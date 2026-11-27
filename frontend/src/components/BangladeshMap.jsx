@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer } from "react-leaflet";
+import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 import { useLanguage } from "../context/LanguageContext";
+
+function MapUpdater({ center, zoom }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center && Array.isArray(center) && center[0] && center[1]) {
+      map.flyTo(center, zoom || 8, { duration: 1.2 });
+    }
+  }, [center, zoom, map]);
+  return null;
+}
 
 // Pure Black & White Monochromatic Palette in Day Mode (Bolt.new Aesthetic)
 const RISK_FILL = {
@@ -16,6 +26,7 @@ export default function BangladeshMap({
   reports = [],
   selectedDistrictId,
   onSelectDistrict,
+  userLocation = null,
   height = "560px",
 }) {
   const { lang, t } = useLanguage();
@@ -98,6 +109,9 @@ export default function BangladeshMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        {userLocation && userLocation.lat && userLocation.lon && (
+          <MapUpdater center={[userLocation.lat, userLocation.lon]} zoom={9} />
+        )}
         {geojson && (
           <GeoJSON
             key={selectedDistrictId || "base"}
@@ -105,6 +119,44 @@ export default function BangladeshMap({
             style={styleFeature}
             onEachFeature={onEachFeature}
           />
+        )}
+        {/* Device GPS Location Marker */}
+        {userLocation && userLocation.lat && userLocation.lon && (
+          <>
+            <CircleMarker
+              center={[userLocation.lat, userLocation.lon]}
+              radius={18}
+              pathOptions={{
+                color: "#000000",
+                fillColor: "#000000",
+                fillOpacity: 0.1,
+                weight: 1.5,
+                dashArray: "3 3",
+              }}
+            />
+            <CircleMarker
+              center={[userLocation.lat, userLocation.lon]}
+              radius={8}
+              pathOptions={{
+                color: "#ffffff",
+                fillColor: "#000000",
+                fillOpacity: 1,
+                weight: 2.5,
+              }}
+            >
+              <Popup>
+                <div style={{ fontFamily: "monospace", fontSize: 12 }}>
+                  <strong>📍 YOUR DEVICE LOCATION</strong>
+                  <div style={{ marginTop: 4 }}>
+                    District: <strong>{userLocation.districtName}</strong>
+                  </div>
+                  <div style={{ color: "#71717a", fontSize: 11, marginTop: 2 }}>
+                    {userLocation.lat.toFixed(4)}° N, {userLocation.lon.toFixed(4)}° E
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          </>
         )}
         {reports.map((r) => (
           <CircleMarker
