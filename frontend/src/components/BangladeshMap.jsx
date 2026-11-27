@@ -109,9 +109,14 @@ export default function BangladeshMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {userLocation && userLocation.lat && userLocation.lon && (
-          <MapUpdater center={[userLocation.lat, userLocation.lon]} zoom={9} />
-        )}
+        {/* Only center on userLocation if it is strictly within Bangladesh */}
+        {userLocation &&
+          userLocation.lat >= 20.5 &&
+          userLocation.lat <= 26.8 &&
+          userLocation.lon >= 88.0 &&
+          userLocation.lon <= 92.8 && (
+            <MapUpdater center={[userLocation.lat, userLocation.lon]} zoom={9} />
+          )}
         {geojson && (
           <GeoJSON
             key={selectedDistrictId || "base"}
@@ -120,44 +125,48 @@ export default function BangladeshMap({
             onEachFeature={onEachFeature}
           />
         )}
-        {/* Device GPS Location Marker */}
-        {userLocation && userLocation.lat && userLocation.lon && (
-          <>
-            <CircleMarker
-              center={[userLocation.lat, userLocation.lon]}
-              radius={18}
-              pathOptions={{
-                color: "#000000",
-                fillColor: "#000000",
-                fillOpacity: 0.1,
-                weight: 1.5,
-                dashArray: "3 3",
-              }}
-            />
-            <CircleMarker
-              center={[userLocation.lat, userLocation.lon]}
-              radius={8}
-              pathOptions={{
-                color: "#ffffff",
-                fillColor: "#000000",
-                fillOpacity: 1,
-                weight: 2.5,
-              }}
-            >
-              <Popup>
-                <div style={{ fontFamily: "monospace", fontSize: 12 }}>
-                  <strong>[DEVICE GPS LOCATION]</strong>
-                  <div style={{ marginTop: 4 }}>
-                    District: <strong>{userLocation.districtName}</strong>
+        {/* Device GPS Location Marker - Only displayed within Bangladesh */}
+        {userLocation &&
+          userLocation.lat >= 20.5 &&
+          userLocation.lat <= 26.8 &&
+          userLocation.lon >= 88.0 &&
+          userLocation.lon <= 92.8 && (
+            <>
+              <CircleMarker
+                center={[userLocation.lat, userLocation.lon]}
+                radius={18}
+                pathOptions={{
+                  color: "#14080e",
+                  fillColor: "#14080e",
+                  fillOpacity: 0.12,
+                  weight: 1.5,
+                  dashArray: "3 3",
+                }}
+              />
+              <CircleMarker
+                center={[userLocation.lat, userLocation.lon]}
+                radius={8}
+                pathOptions={{
+                  color: "#ffffff",
+                  fillColor: "#14080e",
+                  fillOpacity: 1,
+                  weight: 2.5,
+                }}
+              >
+                <Popup>
+                  <div style={{ fontFamily: "monospace", fontSize: 12 }}>
+                    <strong>[DEVICE GPS LOCATION]</strong>
+                    <div style={{ marginTop: 4 }}>
+                      District: <strong>{userLocation.districtName}</strong>
+                    </div>
+                    <div style={{ color: "#71717a", fontSize: 11, marginTop: 2 }}>
+                      {userLocation.lat.toFixed(4)}° N, {userLocation.lon.toFixed(4)}° E
+                    </div>
                   </div>
-                  <div style={{ color: "#71717a", fontSize: 11, marginTop: 2 }}>
-                    {userLocation.lat.toFixed(4)}° N, {userLocation.lon.toFixed(4)}° E
-                  </div>
-                </div>
-              </Popup>
-            </CircleMarker>
-          </>
-        )}
+                </Popup>
+              </CircleMarker>
+            </>
+          )}
         {reports.map((r) => (
           <CircleMarker
             key={r.id}

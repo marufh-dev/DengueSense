@@ -26,7 +26,21 @@ export default function DashboardPage() {
   const [userLocation, setUserLocation] = useState(() => {
     try {
       const saved = localStorage.getItem("denguesense_user_location");
-      return saved ? JSON.parse(saved) : null;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Only accept if strictly inside Bangladesh bounds
+        if (
+          parsed &&
+          parsed.lat >= 20.5 &&
+          parsed.lat <= 26.8 &&
+          parsed.lon >= 88.0 &&
+          parsed.lon <= 92.8
+        ) {
+          return parsed;
+        }
+        localStorage.removeItem("denguesense_user_location");
+      }
+      return null;
     } catch {
       return null;
     }
@@ -92,40 +106,32 @@ export default function DashboardPage() {
       return false;
     };
 
-    // IP Geolocation fallback when browser GPS is inaccurate, slow or denied
+    // IP Geolocation: queries ipwho.is (reliable Bangladesh ISP resolution)
     const tryIpFallback = () => {
-      fetch("https://ipapi.co/json/")
-        .then((res) => {
-          if (!res.ok) throw new Error("ipapi failed");
-          return res.json();
-        })
-        .then((data) => {
-          if (data && data.latitude && data.longitude) {
-            applyDistrict(data.latitude, data.longitude, "ip");
+      fetch("https://ipwho.is/")
+        .then((r) => r.json())
+        .then((d) => {
+          if (
+            d &&
+            d.success &&
+            d.latitude >= 20.5 &&
+            d.latitude <= 26.8 &&
+            d.longitude >= 88.0 &&
+            d.longitude <= 92.8
+          ) {
+            applyDistrict(d.latitude, d.longitude, "ip");
           } else {
             fallbackDefault();
           }
         })
-        .catch(() => {
-          // Alternative free IP geolocation
-          fetch("https://ipwho.is/")
-            .then((r) => r.json())
-            .then((d) => {
-              if (d && d.success && d.latitude && d.longitude) {
-                applyDistrict(d.latitude, d.longitude, "ip");
-              } else {
-                fallbackDefault();
-              }
-            })
-            .catch(() => fallbackDefault());
-        })
+        .catch(() => fallbackDefault())
         .finally(() => setLocating(false));
     };
 
     const fallbackDefault = () => {
       setLocationStatus("fallback");
       setLocating(false);
-      // Prefer cached location if available
+      // Prefer cached location if inside Bangladesh
       if (userLocation && userLocation.districtId) {
         const match = list.find((d) => d.id === userLocation.districtId);
         if (match) {
@@ -135,7 +141,9 @@ export default function DashboardPage() {
       }
       const pirojpur = list.find((d) => d.name_en === "Pirojpur");
       const defaultDist = pirojpur || list.find((d) => d.name_en === "Dhaka") || list[0];
-      if (defaultDist && !selected) handleSelectDistrict(defaultDist);
+      if (defaultDist) {
+        applyDistrict(defaultDist.centroid_lat, defaultDist.centroid_lon, "fallback");
+      }
     };
 
     if (!navigator.geolocation) {
@@ -146,20 +154,21 @@ export default function DashboardPage() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        // Verify if position is within reasonable Bangladesh bounds (lat 20.5 - 26.8, lon 88.0 - 92.8)
+        // Strictly verify if position is within Bangladesh geographic territory (lat 20.5 - 26.8, lon 88.0 - 92.8)
         if (latitude >= 20.5 && latitude <= 26.8 && longitude >= 88.0 && longitude <= 92.8) {
           const applied = applyDistrict(latitude, longitude, "gps");
           if (!applied) tryIpFallback();
         } else {
+          // Hardware/VPN returned non-Bangladesh coordinates (e.g. Miami/US proxy) -> use IP geocoding
           tryIpFallback();
         }
         setLocating(false);
       },
       (err) => {
-        console.info("Browser GPS denied or unavailable:", err.message);
+        console.info("Browser GPS unavailable or denied:", err.message);
         tryIpFallback();
       },
-      { timeout: 8000, maximumAge: 0, enableHighAccuracy: true }
+      { timeout: 6000, maximumAge: 0, enableHighAccuracy: true }
     );
   };
 
