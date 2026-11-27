@@ -23,7 +23,14 @@ export default function DashboardPage() {
   });
 
   // Device Geolocation State
-  const [userLocation, setUserLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState(() => {
+    try {
+      const saved = localStorage.getItem("denguesense_user_location");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [locating, setLocating] = useState(false);
   const [locationStatus, setLocationStatus] = useState("idle"); // 'idle' | 'detecting' | 'detected' | 'denied' | 'unsupported'
 
@@ -58,48 +65,122 @@ export default function DashboardPage() {
 
   const detectDeviceLocation = (districtsList = []) => {
     const list = districtsList.length > 0 ? districtsList : (riskData?.districts || []);
-    if (!navigator.geolocation) {
-      setLocationStatus("unsupported");
-      const dhaka = list.find((d) => d.name_en === "Dhaka");
-      if (dhaka && !selected) handleSelectDistrict(dhaka);
-      return;
-    }
+    if (!list.length) return;
 
     setLocating(true);
     setLocationStatus("detecting");
 
+    const applyDistrict = (lat, lon, src = "gps") => {
+      const { district, distanceKm } = findClosestDistrict(lat, lon, list);
+      if (district) {
+        const locObj = {
+          lat,
+          lon,
+          districtName: district.name_en,
+          districtId: district.id,
+          distanceKm,
+          source: src,
+        };
+        setUserLocation(locObj);
+        setLocationStatus("detected");
+        try {
+          localStorage.setItem("denguesense_user_location", JSON.stringify(locObj));
+        } catch {}
+        handleSelectDistrict(district);
+        return true;
+      }
+      return false;
+    };
+
+    // IP Geolocation fallback when browser GPS is inaccurate, slow or denied
+    const tryIpFallback = () => {
+      fetch("https://ipapi.co/json/")
+        .then((res) => {
+          if (!res.ok) throw new Error("ipapi failed");
+          return res.json();
+        })
+        .then((data) => {
+          if (data && data.latitude && data.longitude) {
+            applyDistrict(data.latitude, data.longitude, "ip");
+          } else {
+            fallbackDefault();
+          }
+        })
+        .catch(() => {
+          // Alternative free IP geolocation
+          fetch("https://ipwho.is/")
+            .then((r) => r.json())
+            .then((d) => {
+              if (d && d.success && d.latitude && d.longitude) {
+                applyDistrict(d.latitude, d.longitude, "ip");
+              } else {
+                fallbackDefault();
+              }
+            })
+            .catch(() => fallbackDefault());
+        })
+        .finally(() => setLocating(false));
+    };
+
+    const fallbackDefault = () => {
+      setLocationStatus("fallback");
+      setLocating(false);
+      // Prefer cached location if available
+      if (userLocation && userLocation.districtId) {
+        const match = list.find((d) => d.id === userLocation.districtId);
+        if (match) {
+          handleSelectDistrict(match);
+          return;
+        }
+      }
+      const pirojpur = list.find((d) => d.name_en === "Pirojpur");
+      const defaultDist = pirojpur || list.find((d) => d.name_en === "Dhaka") || list[0];
+      if (defaultDist && !selected) handleSelectDistrict(defaultDist);
+    };
+
+    if (!navigator.geolocation) {
+      tryIpFallback();
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        const { district, distanceKm } = findClosestDistrict(latitude, longitude, list);
-
-        if (district) {
-          const locObj = {
-            lat: latitude,
-            lon: longitude,
-            districtName: district.name_en,
-            districtId: district.id,
-            distanceKm,
-          };
-          setUserLocation(locObj);
-          setLocationStatus("detected");
-          handleSelectDistrict(district);
+        // Verify if position is within reasonable Bangladesh bounds (lat 20.5 - 26.8, lon 88.0 - 92.8)
+        if (latitude >= 20.5 && latitude <= 26.8 && longitude >= 88.0 && longitude <= 92.8) {
+          const applied = applyDistrict(latitude, longitude, "gps");
+          if (!applied) tryIpFallback();
         } else {
-          setLocationStatus("fallback");
-          const dhaka = list.find((d) => d.name_en === "Dhaka");
-          if (dhaka && !selected) handleSelectDistrict(dhaka);
+          tryIpFallback();
         }
         setLocating(false);
       },
       (err) => {
-        console.info("Geolocation denied or unavailable:", err.message);
-        setLocationStatus("denied");
-        setLocating(false);
-        const dhaka = list.find((d) => d.name_en === "Dhaka");
-        if (dhaka && !selected) handleSelectDistrict(dhaka);
+        console.info("Browser GPS denied or unavailable:", err.message);
+        tryIpFallback();
       },
-      { timeout: 10000, maximumAge: 120000, enableHighAccuracy: true }
+      { timeout: 8000, maximumAge: 0, enableHighAccuracy: true }
     );
+  };
+
+  const handleManualLocationChange = (distId) => {
+    const list = riskData?.districts || [];
+    const matched = list.find((d) => d.id === distId);
+    if (!matched) return;
+    const locObj = {
+      lat: matched.centroid_lat,
+      lon: matched.centroid_lon,
+      districtName: matched.name_en,
+      districtId: matched.id,
+      distanceKm: 0,
+      source: "manual",
+    };
+    setUserLocation(locObj);
+    setLocationStatus("detected");
+    try {
+      localStorage.setItem("denguesense_user_location", JSON.stringify(locObj));
+    } catch {}
+    handleSelectDistrict(matched);
   };
 
   const handleDismissTour = () => {
@@ -184,9 +265,9 @@ export default function DashboardPage() {
       {userLocation && (
         <div
           style={{
-            border: "1px solid #000000",
+            border: "1px solid #14080e",
             background: "#ffffff",
-            boxShadow: "2px 2px 0px #000000",
+            boxShadow: "2px 2px 0px #14080e",
             padding: "10px 14px",
             marginBottom: 20,
             display: "flex",
@@ -204,18 +285,33 @@ export default function DashboardPage() {
                 display: "inline-block",
                 width: 8,
                 height: 8,
-                background: "#000000",
-                boxShadow: "0 0 0 2px #ffffff, 0 0 0 3px #000000",
+                background: "#14080e",
+                boxShadow: "0 0 0 2px #ffffff, 0 0 0 3px #14080e",
               }}
             />
             <div>
-              <strong>[DEVICE GPS DETECTED]: {userLocation.districtName.toUpperCase()}</strong>
+              <strong>
+                [{userLocation.source === "manual" ? "LOCATION SET" : "LOCATION DETECTED"}]: {userLocation.districtName.toUpperCase()}
+              </strong>
               <span style={{ color: "var(--ink-secondary)", marginLeft: 8 }}>
                 ({userLocation.lat.toFixed(4)}° N, {userLocation.lon.toFixed(4)}° E) · Auto-selected local telemetry & risk data
               </span>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <select
+              value={userLocation.districtId || ""}
+              onChange={(e) => handleManualLocationChange(e.target.value)}
+              className="input-field"
+              style={{ height: 26, padding: "0 6px", fontSize: "11px", width: "auto" }}
+              title="Change your active district"
+            >
+              {districts.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {lang === "bn" ? d.name_bn || d.name_en : d.name_en} ({d.division})
+                </option>
+              ))}
+            </select>
             <button
               onClick={() => detectDeviceLocation()}
               disabled={locating}
