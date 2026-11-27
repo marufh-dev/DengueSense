@@ -21,6 +21,13 @@ body {
   overflow-x: hidden;
 }
 
+/* Global Justified Paragraph Typography */
+p {
+  margin: 0 0 var(--space-3);
+  text-align: justify;
+  text-justify: inter-word;
+}
+
 /* Skeleton Pulse Shimmer */
 .skeleton-shimmer {
   background: linear-gradient(
@@ -182,6 +189,8 @@ body {
   max-width: 760px;
   font-size: 13.5px;
   line-height: 1.5;
+  text-align: justify;
+  text-justify: inter-word;
 }
 
 .freshness-pill {
