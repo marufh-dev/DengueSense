@@ -1,44 +1,44 @@
 :root {
-  /* Surfaces & Borders (Dark Grey / Deep Obsidian Palette) */
-  --bg-canvas: #090d16;
-  --bg-surface: rgba(17, 24, 39, 0.72);
-  --bg-surface-solid: #111827;
-  --bg-subtle: rgba(30, 41, 59, 0.65);
-  --border-hairline: rgba(56, 189, 248, 0.16);
-  --border-strong: rgba(56, 189, 248, 0.38);
+  /* Surfaces & Borders (Day Mode: Pure White & Soft Ice Blue Canvas) */
+  --bg-canvas: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-solid: #ffffff;
+  --bg-subtle: #f0f9ff;
+  --border-hairline: rgba(14, 165, 233, 0.18);
+  --border-strong: rgba(14, 165, 233, 0.36);
 
-  /* Ink & Typography (Crisp Ice White & Slate) */
-  --ink-primary: #f8fafc;
-  --ink-secondary: #94a3b8;
+  /* Ink & Typography (Strict Dark Grey) */
+  --ink-primary: #0f172a;
+  --ink-secondary: #334155;
   --ink-muted: #64748b;
 
-  /* Brand & Interactive Accent (Electric Ice Blue) */
-  --accent-primary: #38bdf8;
-  --accent-hover: #7dd3fc;
-  --accent-soft: rgba(56, 189, 248, 0.14);
-  --accent-glow: rgba(56, 189, 248, 0.35);
-  --focus-ring: #38bdf8;
+  /* Brand & Interactive Accent (Vibrant Ice Blue) */
+  --accent-primary: #0284c7;
+  --accent-hover: #0369a1;
+  --accent-soft: #e0f2fe;
+  --accent-glow: rgba(14, 165, 233, 0.22);
+  --focus-ring: #0284c7;
 
   /* Semantic Risk Scale (Strict 2-Color: Ice Blue & Dark Grey) */
-  --risk-low-text: #94a3b8;
-  --risk-low-bg: rgba(30, 41, 59, 0.6);
-  --risk-low-border: rgba(148, 163, 184, 0.28);
+  --risk-low-text: #475569;
+  --risk-low-bg: #f1f5f9;
+  --risk-low-border: #cbd5e1;
 
-  --risk-moderate-text: #7dd3fc;
-  --risk-moderate-bg: rgba(56, 189, 248, 0.1);
-  --risk-moderate-border: rgba(56, 189, 248, 0.3);
+  --risk-moderate-text: #0369a1;
+  --risk-moderate-bg: #f0f9ff;
+  --risk-moderate-border: #bae6fd;
 
-  --risk-high-text: #38bdf8;
-  --risk-high-bg: rgba(56, 189, 248, 0.2);
-  --risk-high-border: rgba(56, 189, 248, 0.6);
+  --risk-high-text: #0284c7;
+  --risk-high-bg: #e0f2fe;
+  --risk-high-border: #7dd3fc;
 
-  --risk-critical-text: #ffffff;
-  --risk-critical-bg: rgba(14, 165, 233, 0.35);
-  --risk-critical-border: #38bdf8;
+  --risk-critical-text: #0c4a6e;
+  --risk-critical-bg: #bae6fd;
+  --risk-critical-border: #0284c7;
 
   --risk-nodata-text: #64748b;
-  --risk-nodata-bg: rgba(15, 23, 42, 0.6);
-  --risk-nodata-border: rgba(51, 65, 85, 0.4);
+  --risk-nodata-bg: #f8fafc;
+  --risk-nodata-border: #e2e8f0;
 
   /* Typography */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -57,9 +57,9 @@
   --radius-lg: 14px;
   --radius-pill: 9999px;
 
-  /* Shadows & Glows */
-  --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.45);
-  --shadow-card-hover: 0 14px 34px -10px rgba(56, 189, 248, 0.25), 0 0 1px 1px rgba(56, 189, 248, 0.3);
-  --glow-accent: 0 0 20px rgba(56, 189, 248, 0.35);
+  /* Shadows & Glows (Day Mode Soft Ice-Blue Elevation) */
+  --shadow-float: 0 4px 20px rgba(14, 165, 233, 0.08), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-card-hover: 0 14px 30px -8px rgba(14, 165, 233, 0.18), 0 0 1px 1px rgba(14, 165, 233, 0.25);
+  --glow-accent: 0 0 20px rgba(14, 165, 233, 0.25);
   --max-width: 1360px;
 }

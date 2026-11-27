@@ -36,18 +36,18 @@ export default function AtmosphericParticles() {
     window.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseleave", handleMouseLeave);
 
-    // Particle count scaled to screen size (between 30 and 55)
-    const particleCount = Math.floor(Math.min(55, Math.max(28, (width * height) / 28000)));
+    // Particle count scaled to screen size (between 25 and 45)
+    const particleCount = Math.floor(Math.min(48, Math.max(24, (width * height) / 32000)));
     const particles = [];
 
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.45,
-        vy: (Math.random() - 0.5) * 0.45,
-        radius: Math.random() * 1.8 + 0.8,
-        alpha: Math.random() * 0.4 + 0.15,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        radius: Math.random() * 2 + 1,
+        alpha: Math.random() * 0.35 + 0.2,
       });
     }
 
@@ -73,9 +73,9 @@ export default function AtmosphericParticles() {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < 110) {
-            const alpha = (1 - dist / 110) * 0.12;
-            ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
-            ctx.lineWidth = 0.65;
+            const alpha = (1 - dist / 110) * 0.16;
+            ctx.strokeStyle = `rgba(14, 165, 233, ${alpha})`;
+            ctx.lineWidth = 0.75;
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
@@ -105,12 +105,12 @@ export default function AtmosphericParticles() {
 
         if (mdist < mouse.radius) {
           const force = (mouse.radius - mdist) / mouse.radius;
-          p.x -= (mdx / mdist) * force * 1.8;
-          p.y -= (mdy / mdist) * force * 1.8;
+          p.x -= (mdx / mdist) * force * 1.5;
+          p.y -= (mdy / mdist) * force * 1.5;
 
-          // Connect to cursor with faint electric ice blue line
-          ctx.strokeStyle = `rgba(56, 189, 248, ${(1 - mdist / mouse.radius) * 0.25})`;
-          ctx.lineWidth = 0.8;
+          // Connect to cursor with crisp ice blue line
+          ctx.strokeStyle = `rgba(2, 132, 199, ${(1 - mdist / mouse.radius) * 0.35})`;
+          ctx.lineWidth = 0.9;
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
           ctx.lineTo(mouse.x, mouse.y);
@@ -118,7 +118,7 @@ export default function AtmosphericParticles() {
         }
 
         // Draw node
-        ctx.fillStyle = `rgba(56, 189, 248, ${p.alpha})`;
+        ctx.fillStyle = `rgba(14, 165, 233, ${p.alpha})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fill();
@@ -149,7 +149,7 @@ export default function AtmosphericParticles() {
         height: "100vh",
         pointerEvents: "none",
         zIndex: 0,
-        opacity: 0.85,
+        opacity: 0.9,
       }}
     />
   );

@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer } from "react-leaflet";
 import { useLanguage } from "../context/LanguageContext";
 
+// Strict 2-Color Palette (Ice Blue & Dark Grey) in Day Mode
 const RISK_FILL = {
-  LOW: "#334155",
-  MODERATE: "#0284c7",
-  HIGH: "#38bdf8",
-  CRITICAL: "#e0f2fe",
-  "NO DATA": "#1e293b",
+  LOW: "#94a3b8",        // Soft Slate Dark Grey
+  MODERATE: "#38bdf8",   // Light Ice Blue
+  HIGH: "#0ea5e9",       // Vibrant Ice Blue
+  CRITICAL: "#0369a1",   // Deep Authoritative Ice Blue
+  "NO DATA": "#cbd5e1",  // Subtle Grey
 };
 
 export default function BangladeshMap({
@@ -51,8 +52,8 @@ export default function BangladeshMap({
 
     return {
       fillColor: RISK_FILL[level] || RISK_FILL["NO DATA"],
-      fillOpacity: level === "NO DATA" ? 0.35 : isSelected ? 0.88 : 0.65,
-      color: isSelected ? "#38bdf8" : "rgba(56, 189, 248, 0.25)",
+      fillOpacity: level === "NO DATA" ? 0.35 : isSelected ? 0.85 : 0.62,
+      color: isSelected ? "#0f172a" : "#ffffff",
       weight: isSelected ? 2.5 : 1,
       dashArray: level === "NO DATA" ? "4 3" : undefined,
     };
@@ -90,47 +91,54 @@ export default function BangladeshMap({
         zoom={7}
         minZoom={6}
         maxZoom={14}
-        style={{ height: "100%", width: "100%", background: "#090d16" }}
+        style={{ height: "100%", width: "100%", background: "#f8fafc" }}
       >
+        {/* Standard OpenStreetMap tiles - Free, reliable, NO API key required */}
         <TileLayer
-          attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {geojson && (
           <GeoJSON
-            key={`${lang}-${districts.length}-${selectedDistrictId || "none"}`}
+            key={selectedDistrictId || "base"}
             data={geojson}
             style={styleFeature}
             onEachFeature={onEachFeature}
           />
         )}
-        {reports.map((rep) => (
+        {reports.map((r) => (
           <CircleMarker
-            key={rep.id}
-            center={[rep.latitude, rep.longitude]}
-            radius={6}
+            key={r.id}
+            center={[r.latitude, r.longitude]}
+            radius={r.is_high_waterlogging_alert ? 7 : 5}
             pathOptions={{
-              color: "#10201d",
-              weight: 1.5,
-              fillColor: "#0f6b60",
+              color: r.is_high_waterlogging_alert ? "#0369a1" : "#0284c7",
+              fillColor: r.is_high_waterlogging_alert ? "#bae6fd" : "#38bdf8",
               fillOpacity: 0.85,
+              weight: r.is_high_waterlogging_alert ? 2.5 : 1.5,
             }}
           >
             <Popup>
-              <div style={{ fontSize: 12 }}>
-                <strong>{rep.report_type.replaceAll("_", " ")}</strong>
-                <div style={{ marginTop: 4 }}>{rep.description}</div>
+              <strong>{r.report_type}</strong>
+              {r.is_high_waterlogging_alert && (
+                <div style={{ color: "#0369a1", fontWeight: 600, fontSize: 11, marginTop: 2 }}>
+                  HIGH WATERLOGGING ALERT
+                </div>
+              )}
+              <div style={{ fontSize: 12, marginTop: 4 }}>{r.description}</div>
+              <div className="meta-label" style={{ marginTop: 4 }}>
+                {r.district_name || "District"} · {new Date(r.created_at).toLocaleDateString()}
               </div>
             </Popup>
           </CircleMarker>
         ))}
       </MapContainer>
 
-      <div className="map-legend" aria-label="Environmental suitability legend">
-        <div className="legend-title">{t.risk.legendTitle}</div>
+      <div className="map-legend">
+        <div className="legend-title">{t.risk.suitabilityScale}</div>
         {legendItems.map((item) => (
           <div key={item.label} className="legend-row">
-            <span className="legend-swatch" style={{ backgroundColor: item.color }} />
+            <span className="legend-swatch" style={{ background: item.color }} />
             <span>{item.label}</span>
           </div>
         ))}
