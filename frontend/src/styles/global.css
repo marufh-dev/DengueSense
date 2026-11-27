@@ -937,22 +937,33 @@ body {
 }
 
 @media (max-width: 768px) {
-  .container,
+  .container {
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-5);
+  }
   .topbar-inner {
-    padding-left: var(--space-4);
-    padding-right: var(--space-4);
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+  }
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
   .page-header h1 {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
   }
   .map-wrapper {
-    height: 380px !important;
+    height: 360px !important;
   }
   .map-legend {
     bottom: 8px;
     left: 8px;
     padding: 6px 8px;
-    font-size: 10px;
+    font-size: 9.5px;
+    max-width: calc(100% - 16px);
   }
   .drawer-footer,
   .simple-list-item {
@@ -961,6 +972,44 @@ body {
   }
   .kpi-grid {
     grid-template-columns: 1fr;
+  }
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    margin-bottom: 12px;
+    border: 1px solid #14080e;
+  }
+  .data-table,
+  .table {
+    min-width: 520px;
+  }
+  .btn {
+    font-size: 11px;
+    height: 34px;
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .brand span {
+    font-size: 13px;
+  }
+  .page-header h1 {
+    font-size: 1.15rem;
+  }
+  .kpi-value {
+    font-size: 1.6rem;
+  }
+  .map-wrapper {
+    height: 320px !important;
+  }
+  .card {
+    padding: 12px;
   }
 }
 
