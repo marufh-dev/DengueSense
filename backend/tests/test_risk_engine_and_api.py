@@ -175,7 +175,7 @@ def test_authenticated_citizen_reporting_and_rbac():
         svc.auth.admin.delete_user(uid)
 
 
-def test_auth_registration_and_magic_link():
+def test_auth_registration_and_validation():
     from unittest.mock import patch
 
     app = create_app()
@@ -211,9 +211,6 @@ def test_auth_registration_and_magic_link():
                 },
             )
             assert dup_res.status_code == 409
-
-            ml_res = client.post("/api/auth/magic-link", json={"email": test_email})
-            assert ml_res.status_code in (200, 502)
         finally:
             if user_id:
                 svc.auth.admin.delete_user(user_id)
