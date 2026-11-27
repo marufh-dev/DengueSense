@@ -69,26 +69,6 @@ export default function ErrorPage({ error, onRetry }) {
           </Link>
         </div>
 
-        {/* Optional Technical Details Toggle */}
-        {error && (
-          <div className="error-diagnostics-box">
-            <button
-              type="button"
-              className="btn btn-ghost"
-              style={{ padding: "4px 8px", fontSize: 12, width: "100%", justifyContent: "space-between" }}
-              onClick={() => setShowDetails((v) => !v)}
-            >
-              <span>{showDetails ? (t?.errors?.hideDetails || "Hide Details") : (t?.errors?.viewDetails || "View Details")}</span>
-              {showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
-            {showDetails && (
-              <pre className="error-diagnostics-pre">
-                {error?.stack || error?.message || String(error)}
-              </pre>
-            )}
-          </div>
-        )}
-
         {/* Minimal Underline Link */}
         <Link to="/" className="error-back-link">
           <ArrowLeft size={14} />

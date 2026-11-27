@@ -16,6 +16,7 @@ const PreventionPage = lazy(() => import("./pages/PreventionPage"));
 const ModerationPage = lazy(() => import("./pages/ModerationPage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
 const MyAlertsPage = lazy(() => import("./pages/MyAlertsPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 const MethodologyPage = lazy(() => import("./pages/MethodologyPage"));
@@ -101,6 +102,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <MyAlertsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
                 </ProtectedRoute>
               }
             />

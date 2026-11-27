@@ -17,6 +17,7 @@ export default function Navbar() {
     { to: "/triage", label: t.nav.triage },
     { to: "/prevention", label: t.nav.prevention },
     { to: "/my-alerts", label: t.nav.alerts },
+    { to: "/profile", label: t.nav.profile },
     { to: "/methodology", label: t.nav.methodology },
   ];
 
