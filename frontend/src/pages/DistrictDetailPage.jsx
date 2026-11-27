@@ -91,12 +91,12 @@ export default function DistrictDetailPage() {
           <div style={{ width: "100%", height: 260 }}>
             <ResponsiveContainer>
               <LineChart data={weather}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8e6" />
-                <XAxis dataKey="recorded_date" tick={{ fontSize: 11 }} minTickGap={24} />
-                <YAxis tick={{ fontSize: 11 }} unit="°" />
-                <Tooltip />
-                <Line type="monotone" dataKey="temp_mean" name="Mean °C" stroke="#0f6b60" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="temp_max" name="Max °C" stroke="#ea580c" strokeWidth={1.5} dot={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(56, 189, 248, 0.12)" />
+                <XAxis dataKey="recorded_date" tick={{ fontSize: 11, fill: "#94a3b8" }} stroke="rgba(56, 189, 248, 0.2)" minTickGap={24} />
+                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} stroke="rgba(56, 189, 248, 0.2)" unit="°" />
+                <Tooltip contentStyle={{ background: "#111827", borderColor: "rgba(56, 189, 248, 0.3)", borderRadius: 8, color: "#f8fafc" }} />
+                <Line type="monotone" dataKey="temp_mean" name="Mean °C" stroke="#38bdf8" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="temp_max" name="Max °C" stroke="#f0f9ff" strokeWidth={1.5} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -107,11 +107,11 @@ export default function DistrictDetailPage() {
           <div style={{ width: "100%", height: 260 }}>
             <ResponsiveContainer>
               <BarChart data={weather}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8e6" />
-                <XAxis dataKey="recorded_date" tick={{ fontSize: 11 }} minTickGap={24} />
-                <YAxis tick={{ fontSize: 11 }} unit="mm" />
-                <Tooltip />
-                <Bar dataKey="rainfall_mm" name="Rainfall (mm)" fill="#0f6b60" radius={[3, 3, 0, 0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(56, 189, 248, 0.12)" />
+                <XAxis dataKey="recorded_date" tick={{ fontSize: 11, fill: "#94a3b8" }} stroke="rgba(56, 189, 248, 0.2)" minTickGap={24} />
+                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} stroke="rgba(56, 189, 248, 0.2)" unit="mm" />
+                <Tooltip contentStyle={{ background: "#111827", borderColor: "rgba(56, 189, 248, 0.3)", borderRadius: 8, color: "#f8fafc" }} />
+                <Bar dataKey="rainfall_mm" name="Rainfall (mm)" fill="rgba(56, 189, 248, 0.75)" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -122,11 +122,11 @@ export default function DistrictDetailPage() {
           <div style={{ width: "100%", height: 260 }}>
             <ResponsiveContainer>
               <LineChart data={weather}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8e6" />
-                <XAxis dataKey="recorded_date" tick={{ fontSize: 11 }} minTickGap={24} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
-                <Tooltip />
-                <Line type="monotone" dataKey="humidity_mean" name="Humidity %" stroke="#2563eb" strokeWidth={2} dot={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(56, 189, 248, 0.12)" />
+                <XAxis dataKey="recorded_date" tick={{ fontSize: 11, fill: "#94a3b8" }} stroke="rgba(56, 189, 248, 0.2)" minTickGap={24} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "#94a3b8" }} stroke="rgba(56, 189, 248, 0.2)" unit="%" />
+                <Tooltip contentStyle={{ background: "#111827", borderColor: "rgba(56, 189, 248, 0.3)", borderRadius: 8, color: "#f8fafc" }} />
+                <Line type="monotone" dataKey="humidity_mean" name="Humidity %" stroke="#7dd3fc" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -140,11 +140,11 @@ export default function DistrictDetailPage() {
             <div style={{ width: "100%", height: 260 }}>
               <ResponsiveContainer>
                 <LineChart data={aq}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8e6" />
-                  <XAxis dataKey="recorded_date" tick={{ fontSize: 11 }} minTickGap={24} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="pm2_5" name="PM2.5" stroke="#475569" strokeWidth={2} dot={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(56, 189, 248, 0.12)" />
+                  <XAxis dataKey="recorded_date" tick={{ fontSize: 11, fill: "#94a3b8" }} stroke="rgba(56, 189, 248, 0.2)" minTickGap={24} />
+                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} stroke="rgba(56, 189, 248, 0.2)" />
+                  <Tooltip contentStyle={{ background: "#111827", borderColor: "rgba(56, 189, 248, 0.3)", borderRadius: 8, color: "#f8fafc" }} />
+                  <Line type="monotone" dataKey="pm2_5" name="PM2.5" stroke="#94a3b8" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

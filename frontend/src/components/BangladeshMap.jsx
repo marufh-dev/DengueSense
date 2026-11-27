@@ -3,11 +3,11 @@ import { CircleMarker, GeoJSON, MapContainer, Popup, TileLayer } from "react-lea
 import { useLanguage } from "../context/LanguageContext";
 
 const RISK_FILL = {
-  LOW: "#16a34a",
-  MODERATE: "#d97706",
-  HIGH: "#ea580c",
-  CRITICAL: "#dc2626",
-  "NO DATA": "#94a3b8",
+  LOW: "#334155",
+  MODERATE: "#0284c7",
+  HIGH: "#38bdf8",
+  CRITICAL: "#e0f2fe",
+  "NO DATA": "#1e293b",
 };
 
 export default function BangladeshMap({
@@ -51,8 +51,8 @@ export default function BangladeshMap({
 
     return {
       fillColor: RISK_FILL[level] || RISK_FILL["NO DATA"],
-      fillOpacity: level === "NO DATA" ? 0.35 : isSelected ? 0.78 : 0.56,
-      color: isSelected ? "#10201d" : "#ffffff",
+      fillOpacity: level === "NO DATA" ? 0.35 : isSelected ? 0.88 : 0.65,
+      color: isSelected ? "#38bdf8" : "rgba(56, 189, 248, 0.25)",
       weight: isSelected ? 2.5 : 1,
       dashArray: level === "NO DATA" ? "4 3" : undefined,
     };
@@ -90,11 +90,11 @@ export default function BangladeshMap({
         zoom={7}
         minZoom={6}
         maxZoom={14}
-        style={{ height: "100%", width: "100%" }}
+        style={{ height: "100%", width: "100%", background: "#090d16" }}
       >
         <TileLayer
-          attribution="&copy; OpenStreetMap contributors"
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
         {geojson && (
           <GeoJSON
