@@ -77,10 +77,20 @@ export default function AdminPage() {
     try {
       const res = await apiRequest("/api/admin/dispatch-alerts", {
         method: "POST",
+        body: { force: true },
         token,
       });
       const sent = res.stats?.sent ?? 0;
-      setSuccess(`${t.admin.dispatchSuccess} (${sent} notifications dispatched)`);
+      const live = res.stats?.live_sent ?? 0;
+      const simulated = res.stats?.simulated ?? 0;
+      let msg = `${t.admin.dispatchSuccess} (${sent} notifications generated`;
+      if (live > 0 && simulated > 0) {
+        msg += ` · ${live} live, ${simulated} simulated`;
+      } else if (simulated > 0) {
+        msg += ` · recorded in user alert history; configure SMTP/Telegram for external delivery`;
+      }
+      msg += `)`;
+      setSuccess(msg);
       loadData();
     } catch (err) {
       setError(err.message);

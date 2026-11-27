@@ -6,6 +6,8 @@ import MapPage from "./pages/MapPage";
 import DistrictDetailPage from "./pages/DistrictDetailPage";
 import CommunityReportsPage from "./pages/CommunityReportsPage";
 import SubmitReportPage from "./pages/SubmitReportPage";
+import TriagePage from "./pages/TriagePage";
+import PreventionPage from "./pages/PreventionPage";
 import ModerationPage from "./pages/ModerationPage";
 import AdminPage from "./pages/AdminPage";
 import MyAlertsPage from "./pages/MyAlertsPage";
@@ -61,6 +63,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <SubmitReportPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/triage"
+            element={
+              <ProtectedRoute>
+                <TriagePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/prevention"
+            element={
+              <ProtectedRoute>
+                <PreventionPage />
               </ProtectedRoute>
             }
           />

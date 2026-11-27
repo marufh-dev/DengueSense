@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Database, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Activity, AlertTriangle, CheckCircle2, ChevronRight, MapPin, X } from "lucide-react";
 import { apiRequest } from "../api/client";
 import { useLanguage } from "../context/LanguageContext";
 import BangladeshMap from "../components/BangladeshMap";
@@ -15,6 +16,16 @@ export default function DashboardPage() {
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showTour, setShowTour] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+  const [dismissTour, setDismissTour] = useState(() => {
+    return localStorage.getItem("denguesense_tour_dismissed") === "true";
+  });
+
+  const handleDismissTour = () => {
+    setDismissTour(true);
+    localStorage.setItem("denguesense_tour_dismissed", "true");
+  };
 
   useEffect(() => {
     Promise.all([
@@ -70,6 +81,65 @@ export default function DashboardPage() {
 
       {error && <div className="alert-banner alert-error">{error}</div>}
 
+      {!dismissTour && (
+        <div style={{
+          marginTop: 16,
+          padding: "12px 18px",
+          borderRadius: "var(--radius, 12px)",
+          background: "linear-gradient(135deg, rgba(2, 132, 199, 0.12), rgba(15, 23, 42, 0.6))",
+          border: "1px solid rgba(2, 132, 199, 0.25)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 12
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: "rgba(2, 132, 199, 0.2)",
+              display: "grid",
+              placeItems: "center",
+              fontSize: "1.1rem"
+            }}>
+              🧭
+            </div>
+            <div>
+              <strong style={{ fontSize: "0.92rem", color: "var(--ink-primary)" }}>
+                {t.tour.bannerTitle}
+              </strong>
+              <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "var(--ink-secondary)" }}>
+                {t.tour.bannerSub}
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ padding: "6px 14px", fontSize: "0.82rem" }}
+              onClick={() => {
+                setTourStep(0);
+                setShowTour(true);
+              }}
+            >
+              {t.tour.startTour}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              style={{ padding: "6px 10px", fontSize: "0.82rem" }}
+              onClick={handleDismissTour}
+            >
+              {t.tour.dismiss}
+            </button>
+          </div>
+        </div>
+      )}
+
       <section className="kpi-grid" aria-label="National summary metrics">
         <div className="card kpi-card">
           <div className="kpi-label"><MapPin size={14} /> {t.dashboard.totalDistricts}</div>
@@ -91,13 +161,11 @@ export default function DashboardPage() {
           <div className="kpi-sub">EDSI 75.0 – 100</div>
         </div>
         <div className="card kpi-card">
-          <div className="kpi-label"><Database size={14} /> {t.dashboard.ingestionStatus}</div>
-          <div className="kpi-value" style={{ fontSize: "1.25rem", textTransform: "uppercase" }}>
-            {latestLog?.status ?? "—"}
+          <div className="kpi-label"><Activity size={14} color="var(--accent-primary)" /> {t.dashboard.activeReportsCount}</div>
+          <div className="kpi-value tabular-nums" style={{ color: "var(--accent-primary)" }}>
+            {reports.length}
           </div>
-          <div className="kpi-sub tabular-nums">
-            {latestLog ? `${latestLog.districts_updated} / 64 ${t.dashboard.districtsUpdated}` : "…"}
-          </div>
+          <div className="kpi-sub">{t.dashboard.activeReportsSub}</div>
         </div>
       </section>
 
@@ -177,6 +245,75 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {/* 60-Second Onboarding Tour Modal */}
+      {showTour && (
+        <div className="modal-backdrop" onClick={() => setShowTour(false)}>
+          <div className="card modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 500, padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span className="badge badge-low" style={{ background: "rgba(2, 132, 199, 0.15)", color: "#0284c7" }}>
+                {t.tour.stepLabel} {tourStep + 1} / 4
+              </span>
+              <button type="button" className="btn btn-ghost" onClick={() => setShowTour(false)} style={{ padding: 4 }}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ textAlign: "center", margin: "20px 0 16px" }}>
+              <div style={{ fontSize: "3rem", marginBottom: 10 }}>
+                {tourStep === 0 && "🗺️"}
+                {tourStep === 1 && "🚨"}
+                {tourStep === 2 && "🩺"}
+                {tourStep === 3 && "🛡️"}
+              </div>
+              <h2 style={{ fontSize: "1.25rem", margin: "0 0 8px" }}>
+                {tourStep === 0 && t.tour.step1Title}
+                {tourStep === 1 && t.tour.step2Title}
+                {tourStep === 2 && t.tour.step3Title}
+                {tourStep === 3 && t.tour.step4Title}
+              </h2>
+              <p style={{ fontSize: "0.88rem", color: "var(--ink-secondary)", lineHeight: 1.6, margin: 0 }}>
+                {tourStep === 0 && t.tour.step1Desc}
+                {tourStep === 1 && t.tour.step2Desc}
+                {tourStep === 2 && t.tour.step3Desc}
+                {tourStep === 3 && t.tour.step4Desc}
+              </p>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--border-subtle)" }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={tourStep === 0}
+                onClick={() => setTourStep((s) => Math.max(0, s - 1))}
+              >
+                {t.tour.prev}
+              </button>
+
+              {tourStep < 3 ? (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setTourStep((s) => s + 1)}
+                >
+                  {t.tour.next} <ChevronRight size={14} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setShowTour(false);
+                    handleDismissTour();
+                  }}
+                >
+                  {t.tour.finish}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

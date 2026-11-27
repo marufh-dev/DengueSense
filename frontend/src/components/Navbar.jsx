@@ -14,6 +14,8 @@ export default function Navbar() {
     { to: "/map", label: t.nav.map },
     { to: "/reports", label: t.nav.reports },
     { to: "/submit-report", label: t.nav.submit },
+    { to: "/triage", label: t.nav.triage },
+    { to: "/prevention", label: t.nav.prevention },
     { to: "/my-alerts", label: t.nav.alerts },
     { to: "/methodology", label: t.nav.methodology },
   ];

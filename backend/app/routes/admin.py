@@ -145,8 +145,10 @@ def trigger_ingest():
 @admin_bp.route("/api/admin/dispatch-alerts", methods=["POST"])
 @require_role("admin")
 def trigger_alert_dispatch():
+    body = request.get_json(silent=True) or {}
+    force = bool(body.get("force", True))
     try:
-        stats = dispatch_high_risk_alerts()
+        stats = dispatch_high_risk_alerts(force=force)
         return jsonify({"success": True, "stats": stats}), 200
     except Exception as exc:
         logger.exception("Manual alert dispatch failed: %s", exc)

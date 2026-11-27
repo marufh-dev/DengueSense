@@ -242,8 +242,21 @@ export default function MyAlertsPage() {
               {notifications.map((n) => (
                 <li key={n.id} className="simple-list-item">
                   <div>
-                    <strong>{n.risk_level}</strong> · <span className="mono">{n.channel}</span>
-                    <div className="meta-label">{n.message}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <strong>{n.risk_level}</strong>
+                      <span className="badge" style={{ fontSize: "0.72rem", padding: "2px 6px" }}>
+                        {n.channel === "telegram" ? "✈️ Telegram" : "✉️ Email"}
+                      </span>
+                      <span className="badge badge-low" style={{
+                        fontSize: "0.7rem",
+                        padding: "2px 6px",
+                        background: n.status === "sent" ? "rgba(22, 163, 74, 0.15)" : "rgba(2, 132, 199, 0.15)",
+                        color: n.status === "sent" ? "#16a34a" : "#0284c7"
+                      }}>
+                        {n.status === "sent" ? "Delivered" : "Simulated"}
+                      </span>
+                    </div>
+                    <div className="meta-label" style={{ marginTop: 4 }}>{n.message}</div>
                   </div>
                   <span className="mono meta-label">{n.alert_date}</span>
                 </li>
