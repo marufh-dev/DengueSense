@@ -25,25 +25,32 @@ def me():
     latest_sub = sub.data[0] if sub.data else {}
 
     # Query user profile and auth metadata
-    user_auth = svc.auth.admin.get_user_by_id(user["id"])
-    umeta = getattr(user_auth, "user_metadata", {}) or {}
+    try:
+        user_auth = svc.auth.admin.get_user_by_id(user["id"])
+        user_obj = getattr(user_auth, "user", user_auth)
+        umeta = getattr(user_obj, "user_metadata", {}) or {}
+    except Exception:
+        umeta = {}
 
     prof = (
         svc.table("user_profiles")
-        .select("id, display_name, role, preferred_district_id")
+        .select("id, display_name, role, preferred_district_id, avatar_id")
         .eq("id", user["id"])
         .maybe_single()
         .execute()
     )
     pdata = prof.data if prof and prof.data else {}
 
+    avatar_id = pdata.get("avatar_id") or umeta.get("avatar_id") or "avatar-shield"
+    display_name = pdata.get("display_name") or umeta.get("display_name") or user.get("display_name") or "Citizen"
+
     return jsonify({
         "id": user["id"],
         "email": user["email"],
-        "role": user["role"],
-        "display_name": pdata.get("display_name") or umeta.get("display_name") or user.get("display_name"),
+        "role": pdata.get("role") or user.get("role") or "citizen",
+        "display_name": display_name,
         "preferred_district_id": pdata.get("preferred_district_id"),
-        "avatar_id": umeta.get("avatar_id", "avatar-shield"),
+        "avatar_id": avatar_id,
         "preferred_email": latest_sub.get("email") or user["email"],
         "telegram_chat_id": latest_sub.get("telegram_chat_id") or "",
         "notification_channels": latest_sub.get("notification_channels") or ["email"],
@@ -73,11 +80,12 @@ def update_profile():
     except Exception:
         pass
 
-    # Update or insert user profile
+    # Update or insert user profile in Supabase database
     profile_payload = {
         "id": user["id"],
         "display_name": display_name,
         "preferred_district_id": preferred_district_id or None,
+        "avatar_id": avatar_id,
     }
     svc.table("user_profiles").upsert(profile_payload, on_conflict="id").execute()
 

@@ -30,19 +30,21 @@ const PREDEFINED_AVATARS = [
 ];
 
 export default function ProfilePage() {
-  const { user, token } = useAuth();
+  const { user, token, profile, refreshProfile } = useAuth();
   const { lang, t } = useLanguage();
 
   const [districts, setDistricts] = useState([]);
-  const [displayName, setDisplayName] = useState("");
-  const [avatarId, setAvatarId] = useState("avatar-shield");
-  const [preferredDistrictId, setPreferredDistrictId] = useState("");
-  const [preferredEmail, setPreferredEmail] = useState("");
-  const [telegramChatId, setTelegramChatId] = useState("");
-  const [channels, setChannels] = useState(["email"]);
-  const [role, setRole] = useState("citizen");
+  const [displayName, setDisplayName] = useState(profile?.display_name || "");
+  const [avatarId, setAvatarId] = useState(
+    () => profile?.avatar_id || localStorage.getItem("denguesense_user_avatar") || "avatar-shield"
+  );
+  const [preferredDistrictId, setPreferredDistrictId] = useState(profile?.preferred_district_id || "");
+  const [preferredEmail, setPreferredEmail] = useState(profile?.preferred_email || user?.email || "");
+  const [telegramChatId, setTelegramChatId] = useState(profile?.telegram_chat_id || "");
+  const [channels, setChannels] = useState(profile?.notification_channels || ["email"]);
+  const [role, setRole] = useState(profile?.role || "citizen");
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!profile);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -59,7 +61,11 @@ export default function ProfilePage() {
         if (meData) {
           setDisplayName(meData.display_name || "");
           setRole(meData.role || "citizen");
-          setAvatarId(meData.avatar_id || "avatar-shield");
+          const loadedAvatar = meData.avatar_id || "avatar-shield";
+          setAvatarId(loadedAvatar);
+          try {
+            localStorage.setItem("denguesense_user_avatar", loadedAvatar);
+          } catch {}
           setPreferredDistrictId(meData.preferred_district_id || "");
           setPreferredEmail(meData.preferred_email || user?.email || "");
           setTelegramChatId(meData.telegram_chat_id || "");
@@ -74,6 +80,13 @@ export default function ProfilePage() {
     setChannels((prev) =>
       prev.includes(ch) ? prev.filter((c) => c !== ch) : [...prev, ch]
     );
+  };
+
+  const handleSelectAvatar = (newAvatarId) => {
+    setAvatarId(newAvatarId);
+    try {
+      localStorage.setItem("denguesense_user_avatar", newAvatarId);
+    } catch {}
   };
 
   const handleSave = async (e) => {
@@ -95,6 +108,12 @@ export default function ProfilePage() {
           notification_channels: channels,
         },
       });
+      try {
+        localStorage.setItem("denguesense_user_avatar", avatarId);
+      } catch {}
+      if (refreshProfile) {
+        await refreshProfile();
+      }
       setSuccess(
         lang === "bn"
           ? "প্রোফাইল এবং টেলিগ্রাম সতর্কতা সফলভাবে হালনাগাদ হয়েছে!"
@@ -202,7 +221,7 @@ export default function ProfilePage() {
                   <button
                     key={av.id}
                     type="button"
-                    onClick={() => setAvatarId(av.id)}
+                    onClick={() => handleSelectAvatar(av.id)}
                     style={{
                       display: "flex",
                       flexDirection: "column",

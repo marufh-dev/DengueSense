@@ -1,13 +1,38 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Activity, Languages, LogOut, Menu, X } from "lucide-react";
+import {
+  Activity,
+  Award,
+  Compass,
+  Languages,
+  LogOut,
+  Menu,
+  Shield,
+  User,
+  X,
+  Zap,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 
+const AVATAR_MAP = {
+  "avatar-shield": Shield,
+  "avatar-user": User,
+  "avatar-compass": Compass,
+  "avatar-activity": Activity,
+  "avatar-zap": Zap,
+  "avatar-award": Award,
+};
+
 export default function Navbar() {
-  const { user, role, signOut } = useAuth();
+  const { user, role, profile, signOut } = useAuth();
   const { lang, toggleLang, t } = useLanguage();
   const [open, setOpen] = useState(false);
+
+  const CurrentAvatar =
+    AVATAR_MAP[profile?.avatar_id] ||
+    AVATAR_MAP[localStorage.getItem("denguesense_user_avatar")] ||
+    Shield;
 
   const navItems = [
     { to: "/", label: t.nav.dashboard },
@@ -66,7 +91,26 @@ export default function Navbar() {
 
           {user && (
             <div className="nav-user-actions">
-              <span className="meta-label mono">{role}</span>
+              <NavLink
+                to="/profile"
+                className="meta-label mono"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  textDecoration: "none",
+                  cursor: "pointer",
+                  padding: "4px 8px",
+                  background: "#ffffff",
+                  border: "1px solid #14080e",
+                  color: "#14080e",
+                  boxShadow: "1px 1px 0px #14080e",
+                }}
+                title="Open Profile Dashboard"
+              >
+                <CurrentAvatar size={13} />
+                <span>{role.toUpperCase()}</span>
+              </NavLink>
               <button type="button" className="btn btn-secondary" onClick={signOut}>
                 <LogOut size={14} /> {t.nav.signOut}
               </button>

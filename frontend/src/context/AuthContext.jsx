@@ -36,6 +36,8 @@ export function AuthProvider({ children }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  const refreshProfile = () => syncProfile(session);
+
   const signIn = (email, password) =>
     supabase.auth.signInWithPassword({ email, password });
 
@@ -56,6 +58,7 @@ export function AuthProvider({ children }) {
         token: session?.access_token || null,
         role: profile?.role || "citizen",
         profile,
+        refreshProfile,
         loading,
         signIn,
         signUp,
