@@ -118,12 +118,12 @@ def test_telegram():
     if not chat_id:
         return jsonify({"error": "Telegram Chat ID is required"}), 400
 
-    token = (os.getenv("TELEGRAM_BOT_TOKEN") or "9165401803:AAFqq-eWIx2MLsg3OIpwvW9_5XbE4m4pqxM").strip()
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     if not token:
         return jsonify({"error": "Telegram bot token is not configured on server"}), 500
 
     test_message = (
-        "🦟 [DengueSense Telemetry Test]\n\n"
+        "[DengueSense Telemetry Test]\n\n"
         "Connection verified! Your Telegram Chat ID is linked to DengueSense.\n\n"
         "You will receive municipal environmental risk advisories and severe outbreak alerts directly here.\n\n"
         "— National Dengue Telemetry Directorate"

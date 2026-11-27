@@ -201,9 +201,13 @@ export default function TelegramHelper({ telegramChatId, onSelectId, token }) {
               fontSize: "0.78rem",
               color: "#14080e",
               fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
             }}
           >
-            ⚠️ {strings.startAlertBotNotice}
+            <AlertCircle size={13} color="#14080e" />
+            <span>{strings.startAlertBotNotice}</span>
           </div>
         </div>
       )}

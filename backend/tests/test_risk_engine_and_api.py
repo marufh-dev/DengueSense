@@ -176,6 +176,8 @@ def test_authenticated_citizen_reporting_and_rbac():
 
 
 def test_auth_registration_and_magic_link():
+    from unittest.mock import patch
+
     app = create_app()
     client = app.test_client()
     svc = get_service_client()
@@ -184,32 +186,34 @@ def test_auth_registration_and_magic_link():
     assert bad_res.status_code == 400
 
     test_email = f"pytest_reg_{uuid.uuid4().hex[:6]}@example.com"
-    reg_res = client.post(
-        "/api/auth/register",
-        json={
-            "email": test_email,
-            "password": "ValidPassword123!",
-            "display_name": "Pytest Citizen",
-        },
-    )
-    assert reg_res.status_code == 201
-    reg_data = reg_res.get_json()
-    assert reg_data["status"] == "success"
-    user_id = reg_data["user"]["id"]
 
-    try:
-        dup_res = client.post(
+    with patch("app.routes.auth_routes.send_email_message", return_value=True):
+        reg_res = client.post(
             "/api/auth/register",
             json={
                 "email": test_email,
                 "password": "ValidPassword123!",
-                "display_name": "Duplicate Citizen",
+                "display_name": "Pytest Citizen",
             },
         )
-        assert dup_res.status_code == 409
+        assert reg_res.status_code == 201
+        reg_data = reg_res.get_json()
+        assert reg_data["status"] == "success"
+        user_id = reg_data["user"]["id"]
 
-        ml_res = client.post("/api/auth/magic-link", json={"email": test_email})
-        assert ml_res.status_code in (200, 502)
-    finally:
-        if user_id:
-            svc.auth.admin.delete_user(user_id)
+        try:
+            dup_res = client.post(
+                "/api/auth/register",
+                json={
+                    "email": test_email,
+                    "password": "ValidPassword123!",
+                    "display_name": "Duplicate Citizen",
+                },
+            )
+            assert dup_res.status_code == 409
+
+            ml_res = client.post("/api/auth/magic-link", json={"email": test_email})
+            assert ml_res.status_code in (200, 502)
+        finally:
+            if user_id:
+                svc.auth.admin.delete_user(user_id)
