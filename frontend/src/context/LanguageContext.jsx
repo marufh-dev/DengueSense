@@ -261,7 +261,8 @@ const TRANSLATIONS = {
       passMin: "Password (min 6 chars)",
       creating: "Creating account…",
       regBtn: "Register",
-      regSuccess: "Registration successful! Check your email to confirm (or sign in if auto-confirmed).",
+      regSuccess:
+        "Registration submitted! Please check your email inbox and spam folder for the verification link. If already confirmed or auto-approved, you can sign in directly.",
       haveAccount: "Already registered?",
       signInLink: "Sign in",
     },
@@ -735,7 +736,8 @@ const TRANSLATIONS = {
       passMin: "পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)",
       creating: "অ্যাকাউন্ট তৈরি হচ্ছে…",
       regBtn: "নিবন্ধন করুন",
-      regSuccess: "নিবন্ধন সফল হয়েছে! নিশ্চিত করতে আপনার ইমেইল দেখুন।",
+      regSuccess:
+        "নিবন্ধন সম্পন্ন হয়েছে! অনুগ্রহ করে আপনার ইনবক্স এবং স্প্যাম ফোল্ডার পরীক্ষা করুন। ইতোমধ্যে নিশ্চিত হয়ে থাকলে সরাসরি সাইন ইন করুন।",
       haveAccount: "ইতিমধ্যেই নিবন্ধিত?",
       signInLink: "সাইন ইন করুন",
     },
