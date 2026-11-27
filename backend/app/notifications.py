@@ -175,3 +175,194 @@ def dispatch_high_risk_alerts(force: bool = False) -> dict[str, int]:
         "skipped_dedup": skipped_dedup,
         "skipped_unconfigured": skipped_unconfigured,
     }
+
+
+def get_advisory_recipients_preview(
+    target_type: str = "high_risk",
+    district_id: int | None = None,
+) -> dict[str, Any]:
+    """Preview count of subscribers and reached districts before dispatching."""
+    svc = get_service_client()
+    today_str = datetime.now(DHAKA_TZ).date().isoformat()
+
+    query = (
+        svc.table("alert_subscriptions")
+        .select("id, district_id, notification_channels, email, telegram_chat_id, districts(id, name_en, division)")
+        .eq("is_active", True)
+    )
+
+    high_risk_dist_ids: list[int] = []
+    if target_type == "high_risk":
+        risk_rows = (
+            svc.table("daily_risk_scores")
+            .select("district_id")
+            .eq("score_date", today_str)
+            .in_("risk_level", list(ALERT_LEVELS))
+            .execute()
+            .data
+        ) or []
+        high_risk_dist_ids = [r["district_id"] for r in risk_rows]
+        if not high_risk_dist_ids:
+            return {
+                "target_type": target_type,
+                "subscriber_count": 0,
+                "email_channels": 0,
+                "telegram_channels": 0,
+                "districts_covered": [],
+                "high_risk_districts_count": 0,
+            }
+        query = query.in_("district_id", high_risk_dist_ids)
+    elif target_type == "district" and district_id:
+        query = query.eq("district_id", district_id)
+
+    subs = query.execute().data or []
+
+    dist_names: set[str] = set()
+    email_cnt = 0
+    tg_cnt = 0
+    for s in subs:
+        d = s.get("districts") or {}
+        if d.get("name_en"):
+            dist_names.add(d["name_en"])
+        channels = s.get("notification_channels") or ["email"]
+        if "email" in channels:
+            email_cnt += 1
+        if "telegram" in channels:
+            tg_cnt += 1
+
+    return {
+        "target_type": target_type,
+        "subscriber_count": len(subs),
+        "email_channels": email_cnt,
+        "telegram_channels": tg_cnt,
+        "districts_covered": sorted(list(dist_names)),
+        "high_risk_districts_count": len(high_risk_dist_ids),
+    }
+
+
+def dispatch_custom_advisory(
+    target_type: str = "high_risk",
+    district_id: int | None = None,
+    risk_level: str = "HIGH",
+    headline: str = "",
+    custom_message: str = "",
+    force: bool = True,
+) -> dict[str, Any]:
+    """Dispatch an admin-crafted custom public health advisory to subscribers."""
+    svc = get_service_client()
+    today_str = datetime.now(DHAKA_TZ).date().isoformat()
+
+    query = (
+        svc.table("alert_subscriptions")
+        .select("id, user_id, district_id, notification_channels, email, telegram_chat_id, districts(name_en, division)")
+        .eq("is_active", True)
+    )
+
+    if target_type == "high_risk":
+        risk_rows = (
+            svc.table("daily_risk_scores")
+            .select("district_id")
+            .eq("score_date", today_str)
+            .in_("risk_level", list(ALERT_LEVELS))
+            .execute()
+            .data
+        ) or []
+        high_risk_dist_ids = [r["district_id"] for r in risk_rows]
+        if not high_risk_dist_ids:
+            return {"sent": 0, "live_sent": 0, "simulated": 0, "recipients_count": 0, "districts": []}
+        query = query.in_("district_id", high_risk_dist_ids)
+    elif target_type == "district" and district_id:
+        query = query.eq("district_id", district_id)
+
+    subs = query.execute().data or []
+    if not subs:
+        return {"sent": 0, "live_sent": 0, "simulated": 0, "recipients_count": 0, "districts": []}
+
+    sent = 0
+    live_sent = 0
+    simulated = 0
+    reached_districts: set[str] = set()
+
+    clean_headline = (headline or "Public Health Advisory").strip()
+    clean_body = (custom_message or "Please inspect standing water containers around residential premises.").strip()
+
+    for sub in subs:
+        dist_name = (sub.get("districts") or {}).get("name_en", "District")
+        reached_districts.add(dist_name)
+
+        msg_text = (
+            f"📢 [DengueSense {risk_level}] {clean_headline}\n"
+            f"📍 District: {dist_name} ({today_str})\n\n"
+            f"{clean_body}\n\n"
+            "— DengueSense Emergency Alert Desk"
+        )
+
+        for channel in sub.get("notification_channels") or ["email"]:
+            if force:
+                try:
+                    svc.table("notification_history").delete().eq("subscription_id", sub["id"]).eq("alert_date", today_str).eq("risk_level", risk_level).eq("channel", channel).execute()
+                except Exception:
+                    pass
+            else:
+                existing = (
+                    svc.table("notification_history")
+                    .select("id")
+                    .eq("subscription_id", sub["id"])
+                    .eq("alert_date", today_str)
+                    .eq("risk_level", risk_level)
+                    .eq("channel", channel)
+                    .maybe_single()
+                    .execute()
+                )
+                if existing and existing.data:
+                    continue
+
+            live_delivered = False
+            try:
+                if channel == "telegram" and sub.get("telegram_chat_id"):
+                    live_delivered = send_telegram_message(sub["telegram_chat_id"], msg_text)
+                elif channel == "email":
+                    dest_email = sub.get("email")
+                    if not dest_email:
+                        try:
+                            user_obj = svc.auth.admin.get_user_by_id(sub["user_id"])
+                            dest_email = getattr(getattr(user_obj, "user", None), "email", None)
+                        except Exception:
+                            dest_email = None
+                    if dest_email:
+                        live_delivered = send_email_message(
+                            dest_email,
+                            f"[DengueSense {risk_level}] {clean_headline} — {dist_name}",
+                            msg_text,
+                        )
+            except Exception as exc:
+                logger.warning("Failed sending custom %s alert for sub %s: %s", channel, sub["id"], exc)
+
+            status_val = "sent" if live_delivered else "simulated"
+            if live_delivered:
+                live_sent += 1
+            else:
+                simulated += 1
+
+            try:
+                svc.table("notification_history").insert({
+                    "subscription_id": sub["id"],
+                    "user_id": sub["user_id"],
+                    "district_id": sub["district_id"],
+                    "alert_date": today_str,
+                    "risk_level": risk_level,
+                    "channel": channel,
+                    "status": status_val,
+                    "message": msg_text,
+                }).execute()
+                sent += 1
+            except Exception as insert_err:
+                logger.warning("Failed to record custom notification history: %s", insert_err)
+
+    return {
+        "sent": sent,
+        "live_sent": live_sent,
+        "simulated": simulated,
+        "recipients_count": len(subs),
+        "districts": sorted(list(reached_districts)),
+    }

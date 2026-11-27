@@ -5,7 +5,11 @@ from flask import Blueprint, g, jsonify, request
 from app.auth import require_role
 from app.db import get_service_client
 from app.ingestion import ingest_weather
-from app.notifications import dispatch_high_risk_alerts
+from app.notifications import (
+    dispatch_high_risk_alerts,
+    dispatch_custom_advisory,
+    get_advisory_recipients_preview,
+)
 
 logger = logging.getLogger("denguesense.admin")
 admin_bp = Blueprint("admin", __name__)
@@ -153,3 +157,52 @@ def trigger_alert_dispatch():
     except Exception as exc:
         logger.exception("Manual alert dispatch failed: %s", exc)
         return jsonify({"error": f"Alert dispatch error: {str(exc)}"}), 500
+
+
+@admin_bp.route("/api/admin/alert-recipients-preview", methods=["GET"])
+@require_role("admin")
+def alert_recipients_preview():
+    target_type = request.args.get("target_type", "high_risk").strip()
+    district_id_raw = request.args.get("district_id")
+    district_id = int(district_id_raw) if district_id_raw and district_id_raw.isdigit() else None
+    try:
+        preview = get_advisory_recipients_preview(target_type=target_type, district_id=district_id)
+        return jsonify({"success": True, "preview": preview}), 200
+    except Exception as exc:
+        logger.exception("Recipients preview failed: %s", exc)
+        return jsonify({"error": str(exc)}), 500
+
+
+@admin_bp.route("/api/admin/dispatch-custom-alert", methods=["POST"])
+@require_role("admin")
+def trigger_custom_alert_dispatch():
+    body = request.get_json(silent=True) or {}
+    target_type = str(body.get("target_type", "high_risk")).strip()
+    district_id = body.get("district_id")
+    if district_id is not None:
+        try:
+            district_id = int(district_id)
+        except (ValueError, TypeError):
+            district_id = None
+    risk_level = str(body.get("risk_level", "HIGH")).strip().upper()
+    headline = str(body.get("headline", "")).strip()
+    custom_message = str(body.get("custom_message", "")).strip()
+    force = bool(body.get("force", True))
+
+    if not custom_message:
+        return jsonify({"error": "Custom advisory message cannot be empty."}), 400
+
+    try:
+        stats = dispatch_custom_advisory(
+            target_type=target_type,
+            district_id=district_id,
+            risk_level=risk_level,
+            headline=headline,
+            custom_message=custom_message,
+            force=force,
+        )
+        return jsonify({"success": True, "stats": stats}), 200
+    except Exception as exc:
+        logger.exception("Manual custom alert dispatch failed: %s", exc)
+        return jsonify({"error": f"Custom alert dispatch error: {str(exc)}"}), 500
+

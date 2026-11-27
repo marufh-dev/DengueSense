@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
+  AlertTriangle,
   Bell,
   CheckCircle2,
   Database,
   ExternalLink,
+  Megaphone,
   Play,
+  Radio,
   RefreshCw,
   Send,
   Shield,
@@ -19,10 +22,11 @@ import { useLanguage } from "../context/LanguageContext";
 
 export default function AdminPage() {
   const { token, role } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const [overview, setOverview] = useState(null);
   const [users, setUsers] = useState([]);
+  const [districts, setDistricts] = useState([]);
   const [loadingOverview, setLoadingOverview] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [ingesting, setIngesting] = useState(false);
@@ -30,6 +34,24 @@ export default function AdminPage() {
   const [updatingUserId, setUpdatingUserId] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Custom Advisory Dispatcher State
+  const [targetScope, setTargetScope] = useState("high_risk");
+  const [targetDistrictId, setTargetDistrictId] = useState("");
+  const [severity, setSeverity] = useState("HIGH");
+  const [headline, setHeadline] = useState(
+    lang === "bn"
+      ? "জরুরি জলাবদ্ধতা ও ডেঙ্গু মশক নিধন সতর্কতা"
+      : "Urgent Waterlogging & Dengue Larvicide Advisory"
+  );
+  const [customMessage, setCustomMessage] = useState(
+    lang === "bn"
+      ? "টানা বৃষ্টিপাতের কারণে নিম্নাঞ্চলে জলাবদ্ধতা সৃষ্টি হয়েছে। নিচতলার ড্রেন ও ছাদের পাইপ পরিষ্কার রাখুন। সিটি কর্পোরেশনের ড্রেনেজ ও ফগিং টিম কাজ করছে।"
+      : "Continuous rainfall has caused road waterlogging. Municipal drainage and vector control teams are deployed. Please inspect rooftop water tanks, flower pots, and plastic containers immediately."
+  );
+  const [recipientPreview, setRecipientPreview] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [dispatchingCustom, setDispatchingCustom] = useState(false);
 
   const loadData = () => {
     setError("");
@@ -44,11 +66,120 @@ export default function AdminPage() {
       .then((res) => setUsers(res.users || []))
       .catch((err) => setError(err.message))
       .finally(() => setLoadingUsers(false));
+
+    apiRequest("/api/districts")
+      .then((res) => {
+        const dists = res.districts || [];
+        setDistricts(dists);
+        if (dists.length > 0 && !targetDistrictId) {
+          const dhaka = dists.find((d) => d.name_en === "Dhaka") || dists[0];
+          setTargetDistrictId(String(dhaka.id));
+        }
+      })
+      .catch(() => {});
   };
 
   useEffect(() => {
     if (token) loadData();
   }, [token]);
+
+  // Fetch real-time recipient preview whenever scope or district changes
+  const fetchRecipientPreview = (scope, distId) => {
+    if (!token) return;
+    setLoadingPreview(true);
+    const params = new URLSearchParams({ target_type: scope });
+    if (scope === "district" && distId) {
+      params.set("district_id", distId);
+    }
+    apiRequest(`/api/admin/alert-recipients-preview?${params.toString()}`, { token })
+      .then((res) => setRecipientPreview(res.preview || null))
+      .catch(() => setRecipientPreview(null))
+      .finally(() => setLoadingPreview(false));
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchRecipientPreview(targetScope, targetDistrictId);
+    }
+  }, [token, targetScope, targetDistrictId]);
+
+  const applyTemplate = (type) => {
+    if (type === "waterlogging") {
+      setHeadline(
+        lang === "bn"
+          ? "জরুরি জলাবদ্ধতা ও ড্রেন নিষ্কাশন সতর্কতা"
+          : "Urgent Waterlogging & Stagnant Pool Advisory"
+      );
+      setCustomMessage(
+        lang === "bn"
+          ? "টানা বৃষ্টিপাতের কারণে নিম্নাঞ্চলে জলাবদ্ধতা সৃষ্টি হয়েছে। নিচতলার ড্রেন ও ছাদের পাইপ পরিষ্কার রাখুন। সিটি কর্পোরেশনের ড্রেনেজ টিম কাজ করছে।"
+          : "Continuous rainfall has caused road inundation and street waterlogging. Please inspect basements, ground floor drainage pipes, and rooftop gutters immediately. Municipal drainage teams have been alerted."
+      );
+      setSeverity("CRITICAL");
+    } else if (type === "larvicide") {
+      setHeadline(
+        lang === "bn"
+          ? "সিটি কর্পোরেশনের মশক নিধন ও ফগিং সময়সূচি"
+          : "City Corporation Larvicide & Fogging Schedule"
+      );
+      setCustomMessage(
+        lang === "bn"
+          ? "আজ বিকাল ৪:০০ থেকে সন্ধ্যা ৬:৩০ পর্যন্ত এলাকায় মশক নিধন ওষুধ ছিটানো হবে। ফগিং চলাকালীন দরজা-জানালা বন্ধ রাখুন এবং ফুলের টবের পানি ফেলে দিন।"
+          : "Municipal vector control teams will conduct larvicide spraying and thermal fogging today between 4:00 PM and 6:30 PM. Keep doors and windows closed during spraying and empty open flower pots."
+      );
+      setSeverity("HIGH");
+    } else if (type === "outbreak") {
+      setHeadline(
+        lang === "bn"
+          ? "ডেঙ্গুর উচ্চ প্রজনন ঝুঁকি ও স্বাস্থ্য পরামর্শ"
+          : "High Dengue Suitability & Fever Screening Alert"
+      );
+      setCustomMessage(
+        lang === "bn"
+          ? "আবহাওয়া পরিস্থিতি এডিস মশার দ্রুত বংশবৃদ্ধির জন্য অত্যন্ত অনুকূল। জ্বর হলে কেবল প্যারাসিটামল গ্রহণ করুন (অ্যাসপিরিন/আইবুপ্রোফেন সম্পূর্ণ নিষেধ) এবং প্রয়োজনে ১৬২৬৩ নম্বরে যোগাযোগ করুন।"
+          : "Environmental suitability for Aedes breeding is at an alarming peak. If experiencing sudden high fever, use Paracetamol ONLY (no Aspirin/NSAIDs) and visit your nearest health complex or call 16263."
+      );
+      setSeverity("WARNING");
+    }
+  };
+
+  const handleDispatchCustomAdvisory = async (e) => {
+    if (e) e.preventDefault();
+    setError("");
+    setSuccess("");
+    if (!customMessage.trim()) {
+      setError("Please provide advisory message text.");
+      return;
+    }
+    setDispatchingCustom(true);
+    try {
+      const res = await apiRequest("/api/admin/dispatch-custom-alert", {
+        method: "POST",
+        token,
+        body: {
+          target_type: targetScope,
+          district_id: targetScope === "district" ? Number(targetDistrictId) : null,
+          risk_level: severity,
+          headline,
+          custom_message: customMessage,
+          force: true,
+        },
+      });
+      const stats = res.stats || {};
+      const sent = stats.sent ?? 0;
+      const reachedDistricts = (stats.districts || []).join(", ") || "targeted area";
+      const recipients = stats.recipients_count ?? 0;
+      setSuccess(
+        `${t.admin.dispatchCustomSuccess}: ${sent} notifications dispatched to ${recipients} active subscribers across [${reachedDistricts}].`
+      );
+      loadData();
+      fetchRecipientPreview(targetScope, targetDistrictId);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDispatchingCustom(false);
+    }
+  };
 
   const handleTriggerIngest = async () => {
     setError("");
@@ -194,6 +325,207 @@ export default function AdminPage() {
           </div>
           <div className="meta-label">Email & Telegram recipients</div>
         </div>
+      </div>
+
+      {/* Manual / Custom District Advisory & Broadcast Dispatcher */}
+      <div className="card" style={{ marginBottom: 24, border: "1px solid var(--border-color)" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            gap: 12,
+            marginBottom: 16,
+          }}
+        >
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <Megaphone size={20} color="var(--accent-primary)" />
+              <h2 style={{ margin: 0 }}>{t.admin.customAdvisoryTitle}</h2>
+            </div>
+            <p className="subtitle" style={{ margin: 0 }}>
+              {t.admin.customAdvisoryDesc}
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--text-muted)",
+                marginRight: 4,
+              }}
+            >
+              {t.admin.quickTemplates}:
+            </span>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ fontSize: 12, padding: "4px 8px" }}
+              onClick={() => applyTemplate("waterlogging")}
+            >
+              {t.admin.tplWaterlogging}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ fontSize: 12, padding: "4px 8px" }}
+              onClick={() => applyTemplate("larvicide")}
+            >
+              {t.admin.tplLarvicide}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ fontSize: 12, padding: "4px 8px" }}
+              onClick={() => applyTemplate("outbreak")}
+            >
+              {t.admin.tplOutbreak}
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleDispatchCustomAdvisory} className="form-stack">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 16,
+            }}
+          >
+            {/* Target Scope */}
+            <div className="form-group">
+              <label htmlFor="advisory-scope">{t.admin.targetScope}</label>
+              <select
+                id="advisory-scope"
+                className="input-field"
+                value={targetScope}
+                onChange={(e) => setTargetScope(e.target.value)}
+              >
+                <option value="high_risk">{t.admin.scopeHighRisk}</option>
+                <option value="district">{t.admin.scopeSpecific}</option>
+                <option value="all">{t.admin.scopeAll}</option>
+              </select>
+            </div>
+
+            {/* Target District (when specific selected) */}
+            {targetScope === "district" && (
+              <div className="form-group">
+                <label htmlFor="advisory-district">{t.admin.targetDistrict}</label>
+                <select
+                  id="advisory-district"
+                  className="input-field"
+                  value={targetDistrictId}
+                  onChange={(e) => setTargetDistrictId(e.target.value)}
+                >
+                  {districts.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {lang === "bn" ? d.name_bn || d.name_en : d.name_en} ({d.division})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Severity Level */}
+            <div className="form-group">
+              <label htmlFor="advisory-severity">{t.admin.alertSeverity}</label>
+              <select
+                id="advisory-severity"
+                className="input-field"
+                value={severity}
+                onChange={(e) => setSeverity(e.target.value)}
+              >
+                <option value="WARNING">{t.admin.severityWarning}</option>
+                <option value="HIGH">{t.admin.severityHigh}</option>
+                <option value="CRITICAL">{t.admin.severityCritical}</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Headline */}
+          <div className="form-group">
+            <label htmlFor="advisory-headline">{t.admin.advisoryHeadline}</label>
+            <input
+              id="advisory-headline"
+              type="text"
+              className="input-field"
+              value={headline}
+              onChange={(e) => setHeadline(e.target.value)}
+              placeholder={t.admin.headlinePlaceholder}
+              required
+            />
+          </div>
+
+          {/* Message Content */}
+          <div className="form-group">
+            <label htmlFor="advisory-message">{t.admin.customMessage}</label>
+            <textarea
+              id="advisory-message"
+              className="input-field"
+              rows={4}
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              placeholder={t.admin.messagePlaceholder}
+              required
+            />
+          </div>
+
+          {/* Live Recipient Reach Preview Banner */}
+          <div
+            style={{
+              padding: "12px 16px",
+              borderRadius: "var(--radius-sm)",
+              background: "var(--bg-secondary)",
+              border: "1px solid var(--border-color)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 12,
+              fontSize: 13,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Radio size={16} color="var(--accent-primary)" />
+              <span>
+                <strong>{t.admin.recipientsPreview}:</strong>{" "}
+                {loadingPreview ? (
+                  <span style={{ color: "var(--text-muted)" }}>{t.admin.recipientsCalculating}</span>
+                ) : recipientPreview?.subscriber_count > 0 ? (
+                  <span>
+                    <strong style={{ color: "var(--accent-primary)" }}>
+                      {recipientPreview.subscriber_count}
+                    </strong>{" "}
+                    {t.admin.reachSubscribers} ({recipientPreview.email_channels} Email,{" "}
+                    {recipientPreview.telegram_channels} Telegram) — [
+                    {recipientPreview.districts_covered?.join(", ") || "Targeted Area"}]
+                  </span>
+                ) : (
+                  <span style={{ color: "var(--text-muted)" }}>{t.admin.noRecipientsNotice}</span>
+                )}
+              </span>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={dispatchingCustom || !customMessage.trim()}
+              >
+                {dispatchingCustom ? (
+                  <RefreshCw size={14} className="spin" />
+                ) : (
+                  <Send size={14} />
+                )}
+                <span>
+                  {dispatchingCustom ? t.admin.dispatching : t.admin.dispatchCustomBtn}
+                </span>
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
 
       {/* Operational Actions Grid */}
