@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Bell, Mail, Send, Trash2 } from "lucide-react";
 import { apiRequest } from "../api/client";
+import TelegramHelper, { extractTelegramId } from "../components/TelegramHelper";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -188,9 +189,25 @@ export default function MyAlertsPage() {
                 type="text"
                 className="input-field"
                 value={telegramChatId}
-                onChange={(e) => setTelegramChatId(e.target.value)}
+                onChange={(e) => {
+                  const cleaned = extractTelegramId(e.target.value);
+                  setTelegramChatId(cleaned || e.target.value);
+                }}
+                onPaste={(e) => {
+                  const pasted = e.clipboardData.getData("text");
+                  const cleaned = extractTelegramId(pasted);
+                  if (cleaned) {
+                    e.preventDefault();
+                    setTelegramChatId(cleaned);
+                  }
+                }}
                 placeholder={t.alerts.telegramPlaceholder}
                 required
+              />
+              <TelegramHelper
+                telegramChatId={telegramChatId}
+                onSelectId={setTelegramChatId}
+                token={token}
               />
             </div>
           )}

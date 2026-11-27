@@ -166,5 +166,10 @@ def test_authenticated_citizen_reporting_and_rbac():
 
         del_res = client.delete(f"/api/alerts/{sub_id}", headers=headers)
         assert del_res.status_code == 200
+
+        # Telegram test ping validation
+        tg_res = client.post("/api/alerts/test-telegram", json={}, headers=headers)
+        assert tg_res.status_code == 400
+        assert "Telegram Chat ID is required" in tg_res.get_json()["error"]
     finally:
         svc.auth.admin.delete_user(uid)

@@ -1,5 +1,7 @@
 """User alert subscription and notification history routes."""
 
+import os
+import requests
 from flask import Blueprint, g, jsonify, request
 from app.auth import require_auth
 from app.db import get_service_client
@@ -106,3 +108,49 @@ def delete_alert(sub_id: str):
 
     svc.table("alert_subscriptions").delete().eq("id", sub_id).eq("user_id", user["id"]).execute()
     return jsonify({"deleted": True, "id": sub_id}), 200
+
+
+@alerts_bp.route("/api/alerts/test-telegram", methods=["POST"])
+@require_auth
+def test_telegram():
+    body = request.get_json(silent=True) or {}
+    chat_id = str(body.get("telegram_chat_id", "")).strip()
+    if not chat_id:
+        return jsonify({"error": "Telegram Chat ID is required"}), 400
+
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    if not token:
+        return jsonify({"error": "Telegram bot token is not configured on server"}), 500
+
+    test_message = (
+        "🦟 [DengueSense Telemetry Test]\n\n"
+        "Connection verified! Your Telegram Chat ID is linked to DengueSense.\n\n"
+        "You will receive municipal environmental risk advisories and severe outbreak alerts directly here.\n\n"
+        "— National Dengue Telemetry Directorate"
+    )
+
+    try:
+        resp = requests.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json={"chat_id": chat_id, "text": test_message},
+            timeout=10,
+        )
+        data = resp.json()
+        if not resp.ok or not data.get("ok"):
+            desc = data.get("description", "Unknown error")
+            if "bot can't initiate conversation" in desc.lower() or "bot was blocked" in desc.lower():
+                return jsonify({
+                    "error": "Bot cannot message you yet. Please open @denguesense_alert_bot in Telegram and tap START first, then try again."
+                }), 400
+            if "chat not found" in desc.lower():
+                return jsonify({
+                    "error": "Chat not found for this ID. Please ensure your Telegram ID is correct and you have pressed /start on @denguesense_alert_bot."
+                }), 400
+            return jsonify({"error": f"Telegram API error: {desc}"}), 400
+
+        return jsonify({
+            "status": "success",
+            "message": "Test alert sent to your Telegram! Check your Telegram app."
+        }), 200
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Network error contacting Telegram: {str(e)}"}), 502

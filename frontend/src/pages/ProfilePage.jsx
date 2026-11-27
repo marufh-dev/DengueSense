@@ -15,6 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 import { apiRequest } from "../api/client";
+import TelegramHelper, { extractTelegramId } from "../components/TelegramHelper";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -322,44 +323,33 @@ export default function ProfilePage() {
                 type="text"
                 className="input-field"
                 value={telegramChatId}
-                onChange={(e) => setTelegramChatId(e.target.value)}
+                onChange={(e) => {
+                  const cleaned = extractTelegramId(e.target.value);
+                  setTelegramChatId(cleaned || e.target.value);
+                }}
+                onPaste={(e) => {
+                  const pasted = e.clipboardData.getData("text");
+                  const cleaned = extractTelegramId(pasted);
+                  if (cleaned) {
+                    e.preventDefault();
+                    setTelegramChatId(cleaned);
+                  }
+                }}
                 placeholder="e.g. 6396225829"
               />
               <small style={{ display: "block", color: "var(--ink-secondary)", fontSize: "0.8rem", marginTop: 4 }}>
                 {lang === "bn"
-                  ? "টেলিগ্রাম বট @denguesense_alert_bot চালু করুন এবং আপনার চ্যাট আইডি দিন (আইডি পেতে @userinfobot ব্যবহার করতে পারেন)।"
-                  : "Start our bot @denguesense_alert_bot on Telegram and paste your numerical ID (obtain via @userinfobot)."}
+                  ? "টেলিগ্রাম বট @denguesense_alert_bot চালু করুন এবং আপনার চ্যাট আইডি দিন (আইডি পেতে নিচের @userinfobot অটোমেশন ব্যবহার করুন)।"
+                  : "Start our bot @denguesense_alert_bot on Telegram and paste your numerical ID (or use the @userinfobot helper below)."}
               </small>
             </div>
 
-            {/* Telegram Bot Linkage Box */}
-            <div
-              style={{
-                padding: "10px 12px",
-                border: "1px dashed #49475b",
-                background: "#ffffff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 10,
-                fontSize: "11.5px",
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              <div>
-                <strong>BOT: @denguesense_alert_bot</strong>
-                <div style={{ color: "var(--ink-secondary)", marginTop: 2 }}>ID: 9165401803 · Active Gateway</div>
-              </div>
-              <a
-                href="https://t.me/denguesense_alert_bot"
-                target="_blank"
-                rel="noreferrer"
-                className="btn btn-secondary"
-                style={{ height: 26, padding: "0 8px", fontSize: "10px" }}
-              >
-                OPEN BOT
-              </a>
-            </div>
+            {/* Telegram ID Automation Helper (@userinfobot) */}
+            <TelegramHelper
+              telegramChatId={telegramChatId}
+              onSelectId={setTelegramChatId}
+              token={token}
+            />
 
             <button
               type="submit"
