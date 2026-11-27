@@ -20,6 +20,7 @@ class Config:
     FLASK_ENV: str = os.getenv("FLASK_ENV", "development")
     PORT: int = int(os.getenv("PORT", "5001"))
     MAX_CONTENT_LENGTH: int = 6 * 1024 * 1024
+    TELEGRAM_BOT_TOKEN: str = (os.getenv("TELEGRAM_BOT_TOKEN") or "9165401803:AAFqq-eWIx2MLsg3OIpwvW9_5XbE4m4pqxM").strip()
 
     # V1 Environmental Dengue Suitability Engine (normalized weights summing to 1.0)
     ENV_WEIGHT_RAINFALL: float = 0.4375

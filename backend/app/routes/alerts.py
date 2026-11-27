@@ -118,7 +118,7 @@ def test_telegram():
     if not chat_id:
         return jsonify({"error": "Telegram Chat ID is required"}), 400
 
-    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    token = (os.getenv("TELEGRAM_BOT_TOKEN") or "9165401803:AAFqq-eWIx2MLsg3OIpwvW9_5XbE4m4pqxM").strip()
     if not token:
         return jsonify({"error": "Telegram bot token is not configured on server"}), 500
 

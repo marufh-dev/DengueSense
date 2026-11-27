@@ -25,7 +25,7 @@ DHAKA_TZ = ZoneInfo("Asia/Dhaka")
 ALERT_LEVELS = {"HIGH", "CRITICAL"}
 
 # Verified live gateway fallback configurations (read securely from environment)
-DEFAULT_TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+DEFAULT_TELEGRAM_BOT_TOKEN = (os.getenv("TELEGRAM_BOT_TOKEN") or "9165401803:AAFqq-eWIx2MLsg3OIpwvW9_5XbE4m4pqxM").strip()
 DEFAULT_RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
 DEFAULT_SMTP_HOST = os.getenv("SMTP_HOST", "smtp.resend.com").strip()
 DEFAULT_SMTP_PORT = int(os.getenv("SMTP_PORT", "465"))
