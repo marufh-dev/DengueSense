@@ -11,6 +11,8 @@ import MyAlertsPage from "./pages/MyAlertsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import MethodologyPage from "./pages/MethodologyPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import ErrorPage from "./pages/ErrorPage";
 
 export default function App() {
   return (
@@ -85,6 +87,11 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Error and 404 Pages */}
+          <Route path="/404" element={<NotFoundPage />} />
+          <Route path="/500" element={<ErrorPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
     </div>

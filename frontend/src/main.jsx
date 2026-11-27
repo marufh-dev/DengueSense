@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import "leaflet/dist/leaflet.css";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
+import ErrorBoundary from "./components/ErrorBoundary";
 import App from "./App";
 import "./styles/tokens.css";
 import "./styles/global.css";
@@ -13,7 +14,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <LanguageProvider>
         <AuthProvider>
-          <App />
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
         </AuthProvider>
       </LanguageProvider>
     </BrowserRouter>
